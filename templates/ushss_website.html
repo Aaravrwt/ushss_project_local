@@ -200,7 +200,7 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 .cutout-bg{
   position:absolute;
   inset:0;
-  background:url('/static/images/ushss_cutout_bg.jpg') center/cover no-repeat;
+  background:url('/static/images/ushss_cutout_bg.jpg') center/cover no-repeat fixed;
   filter:brightness(1.05) contrast(1.1);
 }
 .cutout-mask{
@@ -246,8 +246,7 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 }
 /* Parallax-style scroll animation */
 .cutout-bg{
-  transform:scale(1.15);
-  transition:transform .1s linear;
+  transition:none;
 }
 @media(max-width:900px){
   .cutout-section{height:50vh;min-height:320px}
@@ -1373,21 +1372,15 @@ window.addEventListener("scroll", () => {
   document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 30);
 });
 
-// ── Cutout section: parallax + reveal ──
+// ── Cutout section: in-view reveal for tagline ──
 (function(){
   const cutSec = document.getElementById("cutout");
   if(!cutSec) return;
-  const bg = cutSec.querySelector(".cutout-bg");
   function onScroll(){
     const rect = cutSec.getBoundingClientRect();
     const winH = window.innerHeight;
-    // Check if in view
     if(rect.top < winH && rect.bottom > 0){
       cutSec.classList.add("in-view");
-      // Parallax: shift background as user scrolls
-      const progress = (winH - rect.top) / (winH + rect.height);
-      const translate = (progress - 0.5) * 40; // ±20px movement
-      bg.style.transform = `scale(1.15) translateY(${translate}px)`;
     } else {
       cutSec.classList.remove("in-view");
     }
