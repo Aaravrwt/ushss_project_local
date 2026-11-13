@@ -47,34 +47,78 @@
 </script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;rect width='100' height='100' rx='20' fill='%236B1A1A'/&gt;&lt;text x='50' y='65' font-size='46' font-family='serif' font-weight='bold' fill='%23C9A84C' text-anchor='middle'&gt;G&lt;/text&gt;&lt;/svg&gt;"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap"/>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap"/>
 <style>
 :root{
   --maroon:#881818;
-  --maroon-deep:#5C0D0D;
+  --maroon-deep:#4A0D0D;
   --maroon-light:#A82828;
-  --gold:#D89E28;
-  --gold-light:#F4C856;
-  --cream:#FCFAF6;
-  --cream-dark:#F5EFE4;
-  --ink:#160F08;
+  --gold:#C9A84C;
+  --gold-light:#E8D5A0;
+  --gold-deep:#8B6914;
+  --cream:#FAF7F2;
+  --cream-dark:#F0E8DA;
+  --ink:#1A1410;
   --ink-mid:#362316;
-  --ink-muted:#5E4C3D;
+  --ink-muted:#6B5D50;
   --white:#FFFFFF;
   --border:#DECDB2;
+  /* Motion tokens */
+  --ease-out:cubic-bezier(0.16,1,0.3,1);
+  --ease-in-out:cubic-bezier(0.65,0,0.35,1);
+  --ease-spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ease-smooth:cubic-bezier(0.22,1,0.36,1);
+  --dur-fast:200ms;
+  --dur-normal:400ms;
+  --dur-slow:700ms;
+  --dur-dramatic:1200ms;
+  /* Depth */
+  --shadow-sm:0 2px 8px rgba(26,20,16,0.06);
+  --shadow-md:0 8px 24px rgba(26,20,16,0.1);
+  --shadow-lg:0 20px 48px rgba(26,20,16,0.14);
+  --shadow-glass:0 8px 32px rgba(136,24,24,0.08);
+  /* Radii */
+  --radius-sm:4px;
+  --radius-md:8px;
+  --radius-lg:16px;
 }
+
+/* ── PRELOADER ── */
+.preloader{position:fixed;inset:0;z-index:9999;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s var(--ease-out),visibility .6s;cursor:pointer}
+.preloader.loaded{opacity:0;visibility:hidden;pointer-events:none}
+.preloader-word{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,6vw,4rem);font-weight:700;color:var(--maroon-deep);letter-spacing:.08em;overflow:hidden}
+.preloader-word span{display:inline-block;transform:translateY(110%);animation:preloaderReveal .6s var(--ease-out) forwards}
+.preloader-word span:nth-child(2){animation-delay:.06s}
+.preloader-word span:nth-child(3){animation-delay:.12s}
+.preloader-word span:nth-child(4){animation-delay:.18s}
+.preloader-word span:nth-child(5){animation-delay:.24s}
+.preloader-bar{width:120px;height:2px;background:var(--border);margin-top:1.5rem;border-radius:2px;overflow:hidden;position:relative}
+.preloader-bar::after{content:'';position:absolute;inset:0;background:var(--gold);transform-origin:left;animation:preloaderBar 1.6s var(--ease-in-out) forwards}
+@keyframes preloaderReveal{to{transform:translateY(0)}}
+@keyframes preloaderBar{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
+
+/* ── CUSTOM CURSOR (desktop only) ── */
+@media(hover:hover){
+  .cursor-dot{position:fixed;top:0;left:0;width:8px;height:8px;background:var(--maroon);border-radius:50%;pointer-events:none;z-index:9998;mix-blend-mode:difference;transform:translate(-50%,-50%) scale(1);transition:transform .15s var(--ease-out),width .2s,height .2s,background .2s;will-change:transform}
+  .cursor-dot.hovering{width:40px;height:40px;background:var(--gold);mix-blend-mode:normal;opacity:.35}
+}
+@media(hover:none){.cursor-dot{display:none!important}}
+@media(prefers-reduced-motion:reduce){.cursor-dot{display:none!important}}
 *{box-sizing:border-box;margin:0;padding:0}
-html{scroll-behavior:smooth}
+html{scroll-behavior:auto}
 body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);overflow-x:hidden}
+html.lenis,html.lenis body{height:auto}
 
 /* ── SCROLLBAR ── */
 ::-webkit-scrollbar{width:6px}
 ::-webkit-scrollbar-track{background:var(--cream-dark)}
 ::-webkit-scrollbar-thumb{background:var(--maroon);border-radius:3px}
 
-/* ── NAVBAR ── */
-nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 2.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,247,242,0.92);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);transition:box-shadow .3s}
-nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
+/* ── NAVBAR — GLASS ── */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:0 2.5rem;height:64px;display:flex;align-items:center;justify-content:space-between;background:rgba(250,247,242,0.72);backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5);border-bottom:1px solid rgba(222,205,178,0.4);transition:box-shadow var(--dur-normal) var(--ease-out),background var(--dur-normal) var(--ease-out)}
+nav.scrolled{box-shadow:var(--shadow-md);background:rgba(250,247,242,0.88)}
 .nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none}
 .nav-logo{width:38px;height:38px;border-radius:50%;background:var(--maroon);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:13px;color:var(--gold);font-weight:700;letter-spacing:0.5px;flex-shrink:0}
 .nav-title{display:flex;flex-direction:column}
@@ -131,6 +175,15 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 .portal-login-card.wide{width:min(560px,100%)}
 
 /* ── SUBTLE EDITORIAL MOTION ── */
+/* Hero elements start hidden; revealed by GSAP after preloader */
+html:not(.site-loaded) .hero .hero-eyebrow,
+html:not(.site-loaded) .hero h1,
+html:not(.site-loaded) .hero .hero-sub,
+html:not(.site-loaded) .hero .hero-actions,
+html:not(.site-loaded) .hero .hero-stats,
+html:not(.site-loaded) .hero-editorial-panel{
+  opacity:0;transform:translateY(24px);
+}
 @keyframes heroRiseIn {
   from { opacity: 0; transform: translateY(18px); }
   to { opacity: 1; transform: translateY(0); }
@@ -139,12 +192,13 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
   from { transform: scaleX(0); transform-origin:left; }
   to { transform: scaleX(1); transform-origin:left; }
 }
-.hero .hero-eyebrow { animation: heroRiseIn .65s .08s both; }
-.hero h1 { animation: heroRiseIn .8s .18s both; }
-.hero .hero-sub { animation: heroRiseIn .75s .3s both; }
-.hero .hero-actions { animation: heroRiseIn .7s .42s both; }
-.hero .hero-stats { animation: heroRiseIn .75s .54s both; }
-.hero .hero-left::after { animation: heroRuleGrow 1s .3s both; }
+/* Hero animations now driven by GSAP; CSS keyframes kept as fallback for no-JS */
+.no-js .hero .hero-eyebrow { animation: heroRiseIn .65s .08s both; }
+.no-js .hero h1 { animation: heroRiseIn .8s .18s both; }
+.no-js .hero .hero-sub { animation: heroRiseIn .75s .3s both; }
+.no-js .hero .hero-actions { animation: heroRiseIn .7s .42s both; }
+.no-js .hero .hero-stats { animation: heroRiseIn .75s .54s both; }
+.no-js .hero .hero-left::after { animation: heroRuleGrow 1s .3s both; }
 .btn-gold, .btn-outline { transition: color .25s, background-color .25s, border-color .25s, transform .25s, box-shadow .25s; }
 .btn-gold:hover, .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(74,14,14,.12); }
 .value-card, .prog-card, .faculty-card { will-change: transform; }
@@ -455,12 +509,17 @@ footer{background:var(--ink);padding:4rem 0 2rem;color:rgba(250,247,242,.6)}
   .faculty-carousel{padding:0 2rem}
 }
 
-/* ── ANIMATIONS ── */
-.fade-up{opacity:0;transform:translateY(28px);transition:opacity .7s ease,transform .7s ease}
-.fade-up.visible{opacity:1;transform:translateY(0)}
-.fade-up-delay-1{transition-delay:.1s}
-.fade-up-delay-2{transition-delay:.2s}
-.fade-up-delay-3{transition-delay:.3s}
+/* ── ANIMATIONS (GSAP-driven, CSS fallback) ── */
+.fade-up{opacity:0;transform:translateY(32px)}
+.fade-up.visible{opacity:1;transform:translateY(0);transition:opacity var(--dur-slow) var(--ease-out),transform var(--dur-slow) var(--ease-out)}
+.fade-up-delay-1{transition-delay:.12s}
+.fade-up-delay-2{transition-delay:.24s}
+.fade-up-delay-3{transition-delay:.36s}
+/* Split text reveal: hidden until GSAP processes */
+.reveal-text{overflow:hidden}
+.reveal-text .word{display:inline-block;transform:translateY(110%);opacity:0}
+/* Magnetic button wrapper */
+.magnetic{display:inline-block;transition:transform var(--dur-fast) var(--ease-spring)}
 
 .skip-link{position:fixed;top:-60px;left:12px;z-index:10000;background:var(--maroon);color:#fff;padding:12px 16px}.skip-link:focus{top:0}:focus-visible{outline:3px solid var(--gold);outline-offset:3px}@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}#back-to-top{position:fixed;right:18px;bottom:18px;z-index:90;width:46px;height:46px;border:0;border-radius:50%;background:var(--maroon);color:#fff;font-size:20px;cursor:pointer;display:none}#back-to-top.visible{display:block}
 
@@ -604,16 +663,10 @@ section[id] { scroll-margin-top: 76px; }
 
 /* ── USHSS 3D VISUAL RESTORE ──
    Keep the institutional maroon / gold palette while restoring depth,
-   layered surfaces, motion and responsive presentation. */
-:root {
-  --gold: #D89E28;
-  --gold-light: #F4C856;
-  --cream: #FCFAF6;
-  --cream-dark: #F5EFE4;
-  --border: #DECDB2;
-}
+   layered surfaces, motion and responsive presentation.
+   NOTE: root tokens are defined once at top; only additive overrides below. */
 body { background:var(--cream); }
-nav { background:rgba(252,250,246,.90); backdrop-filter:blur(14px); }
+nav { background:rgba(250,247,242,.72); backdrop-filter:blur(20px) saturate(1.5);-webkit-backdrop-filter:blur(20px) saturate(1.5); }
 .nav-links { gap:1.5rem; }
 .hero {
   min-height:min(850px,100svh);
@@ -835,6 +888,17 @@ footer { background:#241a17; }
 </head>
 <body>
 
+<!-- PRELOADER -->
+<div class="preloader" id="preloader" role="status" aria-label="Loading">
+  <div class="preloader-word" aria-hidden="true">
+    <span>U</span><span>S</span><span>H</span><span>S</span><span>S</span>
+  </div>
+  <div class="preloader-bar"></div>
+</div>
+
+<!-- CUSTOM CURSOR (desktop only) -->
+<div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
+
 <!-- NAV -->
 <a class="skip-link" href="#home">Skip to main content</a>
 <nav id="navbar" aria-label="Main navigation">
@@ -1034,6 +1098,11 @@ footer { background:#241a17; }
 <!-- PROGRAMMES STRIP -->
 <div class="marquee-strip" aria-label="USHSS programmes">
   <div class="marquee-inner">
+    <span class="marquee-item">B.A. English</span>
+    <span class="marquee-item">B.A. Economics</span>
+    <span class="marquee-item">M.A. English</span>
+    <span class="marquee-item">M.A. Economics</span>
+    <span class="marquee-item">Ph.D. Research</span>
     <span class="marquee-item">B.A. English</span>
     <span class="marquee-item">B.A. Economics</span>
     <span class="marquee-item">M.A. English</span>
@@ -1347,10 +1416,10 @@ footer { background:#241a17; }
         <h4>Quick Links</h4>
         <ul>
           <li><a href="#faculty">Faculty Profiles</a></li>
-          <li><a href="#research">Research Publications</a></li>
+          <li><a href="https://ipu.ac.in/" target="_blank" rel="noopener">Research Publications</a></li>
           <li><a href="https://ipu.ac.in/" target="_blank" rel="noopener">Exam Results (official site)</a></li>
           <li><a href="#contact">Timetable enquiries</a></li>
-          <li><a href="#news">Notifications</a></li>
+          <li><a href="#gallery">Campus Life</a></li>
           <li><a href="https://ipu.ac.in/" target="_blank" rel="noopener">Alumni Network (official site)</a></li>
         </ul>
       </div>
@@ -1899,20 +1968,22 @@ async function handleSubmit(e) {
   finally { if (button) { button.disabled = false; button.textContent = "Send Message"; } }
 }
 
-// Smooth scroll for nav links
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  a.addEventListener("click", e => {
-    e.preventDefault();
-    const target = document.querySelector(a.getAttribute("href"));
-    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
-    // Close mobile menu
-    const links = document.querySelector(".nav-links");
-    const menuButton = document.querySelector(".hamburger");
-    if (links) links.classList.remove("mobile-open");
-    if (menuButton) { menuButton.setAttribute("aria-expanded", "false"); menuButton.setAttribute("aria-label", "Open menu"); }
-    document.body.classList.remove("mobile-menu-open");
+// Smooth scroll for nav links (Lenis takes over when loaded; this is fallback)
+if(!window.__lenisActive){
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener("click", e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute("href"));
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      // Close mobile menu
+      const links = document.querySelector(".nav-links");
+      const menuButton = document.querySelector(".hamburger");
+      if (links) links.classList.remove("mobile-open");
+      if (menuButton) { menuButton.setAttribute("aria-expanded", "false"); menuButton.setAttribute("aria-label", "Open menu"); }
+      document.body.classList.remove("mobile-menu-open");
+    });
   });
-});
+}
 
 // Faculty carousel: manual scroll + arrows + larger center card
 const facultyRail = document.getElementById("faculty-grid");
@@ -2005,6 +2076,480 @@ checkExistingAuth();
 document.addEventListener("DOMContentLoaded", checkExistingAuth);
 </script>
 <button id="back-to-top" type="button" aria-label="Back to top" onclick="window.scrollTo(0,0)">↑</button><script>const backTopButton=document.getElementById("back-to-top");window.addEventListener("scroll",function(){backTopButton.classList.toggle("visible",window.scrollY>500)},{passive:true});</script>
+
+<!-- ── EXTERNAL LIBS: Lenis + GSAP + ScrollTrigger ── -->
+<script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+
+<!-- ── MOTION ENGINE ── -->
+<script>
+(function(){
+  'use strict';
+
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const isTouchDevice = window.matchMedia('(hover: none)').matches;
+
+  /* ═══════════════════════════════════════════════════
+     1. PRELOADER
+     ═══════════════════════════════════════════════════ */
+  const preloader = document.getElementById('preloader');
+  function dismissPreloader(){
+    if(!preloader) return;
+    preloader.classList.add('loaded');
+    document.documentElement.classList.add('site-loaded');
+    // Allow GSAP hero animations to start
+    setTimeout(()=>{ triggerHeroReveal(); }, 100);
+  }
+
+  if(preloader){
+    // Dismiss after bar animation finishes (~1.8s) or on click
+    preloader.addEventListener('click', dismissPreloader, {once:true});
+    if(prefersReduced){
+      // Skip preloader entirely
+      preloader.classList.add('loaded');
+      document.documentElement.classList.add('site-loaded');
+    } else {
+      setTimeout(dismissPreloader, 2000);
+    }
+  } else {
+    document.documentElement.classList.add('site-loaded');
+  }
+
+  /* ═══════════════════════════════════════════════════
+     2. LENIS SMOOTH SCROLL
+     ═══════════════════════════════════════════════════ */
+  let lenis = null;
+  if(!prefersReduced && typeof Lenis !== 'undefined'){
+    lenis = new Lenis({
+      duration: 1.1,
+      easing: function(t){ return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
+      orientation: 'vertical',
+      gestureOrientation: 'vertical',
+      smoothWheel: true,
+      wheelMultiplier: 1,
+      touchMultiplier: 1.5,
+    });
+
+    // Integrate Lenis with GSAP ticker
+    if(typeof gsap !== 'undefined'){
+      gsap.ticker.add(function(time){ lenis.raf(time * 1000); });
+      gsap.ticker.lagSmoothing(0);
+    } else {
+      function raf(time){ lenis.raf(time); requestAnimationFrame(raf); }
+      requestAnimationFrame(raf);
+    }
+
+    // Make anchor clicks work with Lenis
+    window.__lenisActive = true;
+    document.querySelectorAll('a[href^="#"]').forEach(function(a){
+      a.addEventListener('click', function(e){
+        var href = a.getAttribute('href');
+        if(!href || href === '#') return;
+        var target = document.querySelector(href);
+        if(target){
+          e.preventDefault();
+          lenis.scrollTo(target, {offset:-76});
+          // Close mobile menu
+          var links = document.querySelector('.nav-links');
+          var menuButton = document.querySelector('.hamburger');
+          if(links) links.classList.remove('mobile-open');
+          if(menuButton){ menuButton.setAttribute('aria-expanded','false'); menuButton.setAttribute('aria-label','Open menu'); }
+          document.body.classList.remove('mobile-menu-open');
+        }
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     3. CUSTOM CURSOR (desktop only)
+     ═══════════════════════════════════════════════════ */
+  if(!isTouchDevice && !prefersReduced){
+    var cursorDot = document.getElementById('cursor-dot');
+    if(cursorDot){
+      var cx = -100, cy = -100;
+      var targetX = -100, targetY = -100;
+      var hovering = false;
+
+      document.addEventListener('mousemove', function(e){
+        targetX = e.clientX;
+        targetY = e.clientY;
+      }, {passive:true});
+
+      function updateCursor(){
+        cx += (targetX - cx) * 0.18;
+        cy += (targetY - cy) * 0.18;
+        cursorDot.style.transform = 'translate(' + cx + 'px,' + cy + 'px) translate(-50%,-50%)' + (hovering ? ' scale(1)' : ' scale(1)');
+        cursorDot.style.left = '0';
+        cursorDot.style.top = '0';
+        requestAnimationFrame(updateCursor);
+      }
+      requestAnimationFrame(updateCursor);
+
+      // Hover detection
+      var hoverTargets = 'a, button, .btn-gold, .btn-outline, .nav-cta, .nav-login-btn, .faculty-card, .prog-card, .value-card, .gallery-item, input, textarea, select';
+      document.addEventListener('mouseover', function(e){
+        if(e.target.closest(hoverTargets)){
+          cursorDot.classList.add('hovering');
+          hovering = true;
+        }
+      });
+      document.addEventListener('mouseout', function(e){
+        if(e.target.closest(hoverTargets)){
+          cursorDot.classList.remove('hovering');
+          hovering = false;
+        }
+      });
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     4. GSAP SCROLL ANIMATIONS
+     ═══════════════════════════════════════════════════ */
+  if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && !prefersReduced){
+    gsap.registerPlugin(ScrollTrigger);
+
+    // Connect Lenis to ScrollTrigger
+    if(lenis){
+      lenis.on('scroll', ScrollTrigger.update);
+    }
+
+    // ── 4a. Fade-up reveals ──
+    // Remove the old IntersectionObserver-based reveals since GSAP handles it now
+    var fadeUps = gsap.utils.toArray('.fade-up');
+    fadeUps.forEach(function(el){
+      gsap.fromTo(el,
+        { y: 40, opacity: 0 },
+        {
+          y: 0, opacity: 1,
+          duration: 0.8,
+          ease: 'power3.out',
+          scrollTrigger: {
+            trigger: el,
+            start: 'top 88%',
+            end: 'top 60%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    });
+
+    // ── 4b. Section title word-split reveals ──
+    var titles = gsap.utils.toArray('.section-title');
+    titles.forEach(function(title){
+      // Split text into word spans
+      var text = title.textContent;
+      var html = title.innerHTML;
+      // Preserve existing HTML structure (em tags etc)
+      var wrapper = document.createElement('div');
+      wrapper.innerHTML = html;
+
+      function wrapWords(node){
+        if(node.nodeType === 3){
+          // Text node
+          var words = node.textContent.split(/(\s+)/);
+          var frag = document.createDocumentFragment();
+          words.forEach(function(word){
+            if(/^\s+$/.test(word)){
+              frag.appendChild(document.createTextNode(word));
+            } else if(word){
+              var span = document.createElement('span');
+              span.className = 'word';
+              span.style.display = 'inline-block';
+              span.style.overflow = 'hidden';
+              var inner = document.createElement('span');
+              inner.className = 'word-inner';
+              inner.style.display = 'inline-block';
+              inner.textContent = word;
+              span.appendChild(inner);
+              frag.appendChild(span);
+            }
+          });
+          node.parentNode.replaceChild(frag, node);
+        } else if(node.nodeType === 1){
+          // Element node — recurse into children
+          Array.from(node.childNodes).forEach(wrapWords);
+        }
+      }
+
+      wrapWords(wrapper);
+      title.innerHTML = wrapper.innerHTML;
+
+      var wordInners = title.querySelectorAll('.word-inner');
+      gsap.fromTo(wordInners,
+        { y: '110%', opacity: 0 },
+        {
+          y: '0%', opacity: 1,
+          duration: 0.65,
+          ease: 'power3.out',
+          stagger: 0.04,
+          scrollTrigger: {
+            trigger: title,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    });
+
+    // ── 4c. Section label slide-in ──
+    gsap.utils.toArray('.section-label').forEach(function(label){
+      gsap.fromTo(label,
+        { x: -24, opacity: 0 },
+        {
+          x: 0, opacity: 1,
+          duration: 0.6,
+          ease: 'power2.out',
+          scrollTrigger: {
+            trigger: label,
+            start: 'top 90%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    });
+
+    // ── 4d. Cutout section subtle scale ──
+    var cutoutSection = document.querySelector('.cutout-section');
+    if(cutoutSection){
+      var cutoutText = cutoutSection.querySelector('.cutout-mask h2');
+      if(cutoutText){
+        gsap.fromTo(cutoutText,
+          { scale: 0.85, opacity: 0.5 },
+          {
+            scale: 1, opacity: 1,
+            ease: 'none',
+            scrollTrigger: {
+              trigger: cutoutSection,
+              start: 'top 80%',
+              end: 'center center',
+              scrub: 0.8,
+            }
+          }
+        );
+      }
+    }
+
+    // ── 4e. Value cards stagger ──
+    var valueCards = gsap.utils.toArray('.value-card');
+    if(valueCards.length){
+      gsap.fromTo(valueCards,
+        { y: 30, opacity: 0, scale: 0.96 },
+        {
+          y: 0, opacity: 1, scale: 1,
+          duration: 0.5,
+          ease: 'power2.out',
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: valueCards[0].parentElement,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    }
+
+    // ── 4f. Programme cards stagger ──
+    var progCards = gsap.utils.toArray('.prog-card');
+    if(progCards.length){
+      gsap.fromTo(progCards,
+        { y: 30, opacity: 0 },
+        {
+          y: 0, opacity: 1,
+          duration: 0.5,
+          ease: 'power2.out',
+          stagger: 0.1,
+          scrollTrigger: {
+            trigger: progCards[0].parentElement,
+            start: 'top 80%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    }
+
+    // ── 4g. Faculty cards reveal ──
+    var facultyCards = gsap.utils.toArray('.faculty-card');
+    if(facultyCards.length){
+      gsap.fromTo(facultyCards,
+        { y: 24, opacity: 0 },
+        {
+          y: 0, opacity: 1,
+          duration: 0.5,
+          ease: 'power2.out',
+          stagger: 0.08,
+          scrollTrigger: {
+            trigger: facultyCards[0].parentElement,
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    }
+
+    // ── 4h. Gallery items reveal ──
+    var galleryItems = gsap.utils.toArray('.gallery-item');
+    if(galleryItems.length){
+      gsap.fromTo(galleryItems,
+        { y: 20, opacity: 0, scale: 0.95 },
+        {
+          y: 0, opacity: 1, scale: 1,
+          duration: 0.5,
+          ease: 'power2.out',
+          stagger: 0.06,
+          scrollTrigger: {
+            trigger: galleryItems[0].parentElement,
+            start: 'top 82%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    }
+
+    // ── 4i. Contact section reveal ──
+    var contactGrid = document.querySelector('.contact-grid');
+    if(contactGrid){
+      gsap.fromTo(contactGrid.children,
+        { y: 30, opacity: 0 },
+        {
+          y: 0, opacity: 1,
+          duration: 0.6,
+          ease: 'power2.out',
+          stagger: 0.15,
+          scrollTrigger: {
+            trigger: contactGrid,
+            start: 'top 82%',
+            toggleActions: 'play none none none',
+          }
+        }
+      );
+    }
+
+    // ── 4j. Marquee parallax speed ──
+    var marqueeStrip = document.querySelector('.marquee-strip');
+    if(marqueeStrip){
+      gsap.to(marqueeStrip, {
+        backgroundPositionX: '-20%',
+        ease: 'none',
+        scrollTrigger: {
+          trigger: marqueeStrip,
+          start: 'top bottom',
+          end: 'bottom top',
+          scrub: 1,
+        }
+      });
+    }
+
+    // ── 4k. Nav shadow on scroll ──
+    ScrollTrigger.create({
+      start: 30,
+      onUpdate: function(self){
+        var nav = document.getElementById('navbar');
+        if(nav){
+          nav.classList.toggle('scrolled', self.progress > 0);
+        }
+      }
+    });
+
+  } else if(!prefersReduced) {
+    // Fallback: if GSAP didn't load, use the existing IntersectionObserver
+    // (already in the inline script above)
+  }
+
+  /* ═══════════════════════════════════════════════════
+     5. HERO STAGGERED REVEAL
+     ═══════════════════════════════════════════════════ */
+  function triggerHeroReveal(){
+    if(typeof gsap === 'undefined' || prefersReduced) return;
+
+    var heroElements = [
+      '.hero .hero-eyebrow',
+      '.hero h1',
+      '.hero .hero-sub',
+      '.hero .hero-actions',
+      '.hero .hero-stats',
+      '.hero-editorial-panel'
+    ];
+
+    heroElements.forEach(function(sel, i){
+      var el = document.querySelector(sel);
+      if(el){
+        gsap.fromTo(el,
+          { y: 24, opacity: 0 },
+          {
+            y: 0, opacity: 1,
+            duration: 0.7,
+            delay: i * 0.1,
+            ease: 'power3.out',
+          }
+        );
+      }
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     6. MAGNETIC BUTTONS
+     ═══════════════════════════════════════════════════ */
+  if(!isTouchDevice && !prefersReduced){
+    var magneticEls = document.querySelectorAll('.btn-gold, .btn-outline, .nav-cta, .nav-login-btn');
+    magneticEls.forEach(function(el){
+      el.addEventListener('mousemove', function(e){
+        var rect = el.getBoundingClientRect();
+        var x = e.clientX - rect.left - rect.width / 2;
+        var y = e.clientY - rect.top - rect.height / 2;
+        var strength = 0.2;
+        el.style.transform = 'translate(' + (x * strength) + 'px,' + (y * strength) + 'px)';
+      });
+      el.addEventListener('mouseleave', function(){
+        el.style.transform = '';
+      });
+    });
+  }
+
+  /* ═══════════════════════════════════════════════════
+     7. CUTOUT BG FIX FOR iOS
+     ═══════════════════════════════════════════════════ */
+  var cutoutBg = document.querySelector('.cutout-bg');
+  if(cutoutBg){
+    // iOS doesn't support background-attachment:fixed
+    var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+    if(isIOS || isTouchDevice){
+      cutoutBg.style.backgroundAttachment = 'scroll';
+      // Simple parallax via GSAP
+      if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && !prefersReduced){
+        gsap.to(cutoutBg, {
+          yPercent: -15,
+          ease: 'none',
+          scrollTrigger: {
+            trigger: cutoutBg.parentElement,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 1,
+          }
+        });
+      }
+    }
+  }
+
+  /* ═══════════════════════════════════════════════════
+     8. CUTOUT SECTION IN-VIEW (preserve existing behavior)
+     ═══════════════════════════════════════════════════ */
+  var cutoutObs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      e.target.classList.toggle('in-view', e.isIntersecting);
+    });
+  }, {threshold: 0.3});
+  var cutoutEl = document.querySelector('.cutout-section');
+  if(cutoutEl) cutoutObs.observe(cutoutEl);
+
+  /* ═══════════════════════════════════════════════════
+     9. DISABLE OLD IntersectionObserver (GSAP replaces it)
+     ═══════════════════════════════════════════════════ */
+  // The old observer at line ~1940 still runs as a CSS fallback.
+  // GSAP will override it since it sets opacity/transform directly.
+
+})();
+</script>
 </body>
 </html>
 
