@@ -189,18 +189,21 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 .cutout-section{
   position:relative;
   width:100%;
-  padding:2rem 0 3.5rem;
+  height:clamp(320px, 42vh, 410px);
+  min-height:320px;
   display:flex;
   align-items:center;
   justify-content:center;
   overflow:hidden;
   background:var(--cream);
+  isolation:isolate;
 }
 .cutout-bg{
   position:absolute;
   inset:0;
   background:url('/static/images/ushss_cutout_bg.jpg') center/cover no-repeat fixed;
   filter:brightness(1.05) contrast(1.1);
+  z-index:1;
 }
 .cutout-mask{
   position:absolute;
@@ -210,52 +213,57 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
   justify-content:center;
   background:var(--cream);
   mix-blend-mode:screen;
+  z-index:2;
+  padding:0 1.5rem;
 }
 .cutout-mask h2{
   font-family:'Playfair Display',serif;
-  font-size:clamp(8rem,22vw,20rem);
+  font-size:clamp(6.5rem,17vw,13rem);
   font-weight:900;
   color:#000;
   letter-spacing:0.04em;
-  line-height:1;
+  line-height:0.95;
   text-align:center;
   user-select:none;
+  margin:0;
+  transform:translateY(-0.8rem);
 }
 /* Subtle tagline below the cutout */
 .cutout-tagline{
   position:absolute;
-  bottom:1rem;
+  bottom:2.4rem;
   left:0;right:0;
   text-align:center;
-  z-index:2;
+  z-index:3;
+  pointer-events:none;
 }
 .cutout-tagline span{
   font-family:'EB Garamond',serif;
-  font-size:1.1rem;
+  font-size:clamp(0.85rem,1.3vw,1.1rem);
   color:var(--ink-muted);
-  letter-spacing:2px;
+  letter-spacing:2.5px;
   text-transform:uppercase;
+  font-weight:500;
   opacity:0;
-  transform:translateY(16px);
-  transition:opacity .8s ease .3s, transform .8s ease .3s;
+  transform:translateY(12px);
+  transition:opacity .7s ease .2s, transform .7s ease .2s;
+  display:inline-block;
 }
 .cutout-section.in-view .cutout-tagline span{
   opacity:1;
   transform:translateY(0);
 }
-/* Parallax-style scroll animation */
-.cutout-bg{
-  transition:none;
-}
 @media(max-width:900px){
-  .cutout-section{padding:1.5rem 0 2.5rem}
-  .cutout-mask h2{font-size:clamp(5rem,20vw,10rem)}
-  .cutout-tagline{bottom:1rem}
-  .cutout-tagline span{font-size:.9rem;letter-spacing:1.5px}
+  .cutout-section{height:clamp(230px, 32vh, 290px);min-height:230px}
+  .cutout-mask h2{font-size:clamp(4.2rem,15vw,8rem);transform:translateY(-0.5rem)}
+  .cutout-tagline{bottom:1.5rem}
+  .cutout-tagline span{font-size:0.82rem;letter-spacing:1.8px}
 }
 @media(max-width:560px){
-  .cutout-section{padding:1rem 0 2rem}
-  .cutout-mask h2{font-size:clamp(4rem,18vw,7rem)}
+  .cutout-section{height:clamp(180px, 28vh, 220px);min-height:180px}
+  .cutout-mask h2{font-size:clamp(3.4rem,16vw,5.2rem);transform:translateY(-0.35rem)}
+  .cutout-tagline{bottom:1rem}
+  .cutout-tagline span{font-size:0.72rem;letter-spacing:1.2px}
 }
 
 /* ── MARQUEE ── */
