@@ -189,8 +189,7 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 .cutout-section{
   position:relative;
   width:100%;
-  height:80vh;
-  min-height:500px;
+  padding:2rem 0 3.5rem;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -225,7 +224,7 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 /* Subtle tagline below the cutout */
 .cutout-tagline{
   position:absolute;
-  bottom:3.5rem;
+  bottom:1rem;
   left:0;right:0;
   text-align:center;
   z-index:2;
@@ -249,13 +248,13 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
   transition:none;
 }
 @media(max-width:900px){
-  .cutout-section{height:50vh;min-height:320px}
+  .cutout-section{padding:1.5rem 0 2.5rem}
   .cutout-mask h2{font-size:clamp(5rem,20vw,10rem)}
-  .cutout-tagline{bottom:2rem}
+  .cutout-tagline{bottom:1rem}
   .cutout-tagline span{font-size:.9rem;letter-spacing:1.5px}
 }
 @media(max-width:560px){
-  .cutout-section{height:40vh;min-height:260px}
+  .cutout-section{padding:1rem 0 2rem}
   .cutout-mask h2{font-size:clamp(4rem,18vw,7rem)}
 }
 
