@@ -185,6 +185,81 @@ nav.scrolled{box-shadow:0 2px 20px rgba(107,26,26,0.08)}
 /* decorative vertical line */
 .hero-left::after{content:'';position:absolute;top:12%;bottom:12%;right:0;width:1px;background:linear-gradient(to bottom,transparent,var(--border) 30%,var(--border) 70%,transparent)}
 
+/* ── CUTOUT TEXT SECTION ── */
+.cutout-section{
+  position:relative;
+  width:100%;
+  height:80vh;
+  min-height:500px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  background:var(--cream);
+}
+.cutout-bg{
+  position:absolute;
+  inset:0;
+  background:url('/static/images/ushss_cutout_bg.jpg') center/cover no-repeat;
+  filter:brightness(1.05) contrast(1.1);
+}
+.cutout-mask{
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:var(--cream);
+  mix-blend-mode:screen;
+}
+.cutout-mask h2{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(8rem,22vw,20rem);
+  font-weight:900;
+  color:#000;
+  letter-spacing:0.04em;
+  line-height:1;
+  text-align:center;
+  user-select:none;
+}
+/* Subtle tagline below the cutout */
+.cutout-tagline{
+  position:absolute;
+  bottom:3.5rem;
+  left:0;right:0;
+  text-align:center;
+  z-index:2;
+}
+.cutout-tagline span{
+  font-family:'EB Garamond',serif;
+  font-size:1.1rem;
+  color:var(--ink-muted);
+  letter-spacing:2px;
+  text-transform:uppercase;
+  opacity:0;
+  transform:translateY(16px);
+  transition:opacity .8s ease .3s, transform .8s ease .3s;
+}
+.cutout-section.in-view .cutout-tagline span{
+  opacity:1;
+  transform:translateY(0);
+}
+/* Parallax-style scroll animation */
+.cutout-bg{
+  transform:scale(1.15);
+  transition:transform .1s linear;
+}
+@media(max-width:900px){
+  .cutout-section{height:50vh;min-height:320px}
+  .cutout-mask h2{font-size:clamp(5rem,20vw,10rem)}
+  .cutout-tagline{bottom:2rem}
+  .cutout-tagline span{font-size:.9rem;letter-spacing:1.5px}
+}
+@media(max-width:560px){
+  .cutout-section{height:40vh;min-height:260px}
+  .cutout-mask h2{font-size:clamp(4rem,18vw,7rem)}
+}
+
 /* ── MARQUEE ── */
 .marquee-strip{background:var(--maroon);padding:12px 0;overflow:hidden;white-space:nowrap}
 .marquee-inner{display:inline-block;animation:marquee 30s linear infinite}
@@ -939,6 +1014,17 @@ footer { background:#241a17; }
   </div>
 </section>
 
+<!-- CUTOUT TEXT -->
+<div class="cutout-section" id="cutout">
+  <div class="cutout-bg"></div>
+  <div class="cutout-mask">
+    <h2>USHSS</h2>
+  </div>
+  <div class="cutout-tagline">
+    <span>University School of Humanities &amp; Social Sciences</span>
+  </div>
+</div>
+
 <!-- PROGRAMMES STRIP -->
 <div class="marquee-strip" aria-label="USHSS programmes">
   <div class="marquee-inner">
@@ -1286,6 +1372,29 @@ footer { background:#241a17; }
 window.addEventListener("scroll", () => {
   document.getElementById("navbar").classList.toggle("scrolled", window.scrollY > 30);
 });
+
+// ── Cutout section: parallax + reveal ──
+(function(){
+  const cutSec = document.getElementById("cutout");
+  if(!cutSec) return;
+  const bg = cutSec.querySelector(".cutout-bg");
+  function onScroll(){
+    const rect = cutSec.getBoundingClientRect();
+    const winH = window.innerHeight;
+    // Check if in view
+    if(rect.top < winH && rect.bottom > 0){
+      cutSec.classList.add("in-view");
+      // Parallax: shift background as user scrolls
+      const progress = (winH - rect.top) / (winH + rect.height);
+      const translate = (progress - 0.5) * 40; // ±20px movement
+      bg.style.transform = `scale(1.15) translateY(${translate}px)`;
+    } else {
+      cutSec.classList.remove("in-view");
+    }
+  }
+  window.addEventListener("scroll", onScroll, {passive:true});
+  onScroll();
+})();
 
 // Hamburger menu (mobile)
 function toggleMenu() {
