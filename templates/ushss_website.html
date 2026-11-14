@@ -465,8 +465,8 @@ html:not(.site-loaded) .hero-editorial-panel{
 .cutout-section{
   position:relative;
   width:100%;
-  height:clamp(320px, 42vh, 410px);
-  min-height:320px;
+  height:clamp(340px, 46vh, 450px);
+  min-height:340px;
   display:flex;
   align-items:center;
   justify-content:center;
@@ -495,12 +495,16 @@ html:not(.site-loaded) .hero-editorial-panel{
   user-select:none;
   margin:0;
   transform:translateY(-0.8rem);
-  background:linear-gradient(135deg, rgba(78, 174, 192, 0.45) 0%, rgba(18, 78, 102, 0.35) 60%, rgba(33, 42, 49, 0.6) 100%), url('/static/images/ushss_cutout_bg.jpg') center/cover no-repeat fixed;
+  background-image:linear-gradient(135deg, rgba(78, 174, 192, 0.40) 0%, rgba(18, 78, 102, 0.30) 60%, rgba(33, 42, 49, 0.55) 100%), url('/static/images/ushss_cutout_bg.jpg');
+  background-size:cover, cover;
+  background-repeat:no-repeat, no-repeat;
+  background-position:center center, center 50%;
   -webkit-background-clip:text;
   background-clip:text;
   -webkit-text-fill-color:transparent;
   color:transparent;
   filter:drop-shadow(0 6px 24px rgba(33,42,49,0.85));
+  will-change:transform, opacity, background-position;
 }
 /* Subtle tagline below the cutout */
 .cutout-tagline{
@@ -2823,24 +2827,38 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       );
     });
 
-    // ── 4d. Cutout section subtle scale ──
+    // ── 4d. Cutout section: Parallax scroll through image + Two-way scale ──
     var cutoutSection = document.querySelector('.cutout-section');
     if(cutoutSection){
       var cutoutText = cutoutSection.querySelector('.cutout-mask h2');
-      if(cutoutText){
-        gsap.fromTo(cutoutText,
-          { scale: 0.85, opacity: 0.5 },
-          {
-            scale: 1, opacity: 1,
-            ease: 'none',
-            scrollTrigger: {
-              trigger: cutoutSection,
-              start: 'top 80%',
-              end: 'center center',
-              scrub: 0.8,
+      if(cutoutText && !prefersReduced){
+        // Dynamic parallax scroll through the underlying campus image
+        // As you scroll up/down, the image pans vertically through the letters
+        var cutoutTl = gsap.timeline({
+          scrollTrigger: {
+            trigger: cutoutSection,
+            start: 'top bottom',
+            end: 'bottom top',
+            scrub: 0.6,
+            onUpdate: function(self) {
+              // Panning from 5% near top of image to 95% near bottom
+              var p = self.progress;
+              var yPos = (5 + p * 90).toFixed(1);
+              cutoutText.style.backgroundPosition = 'center center, center ' + yPos + '%';
             }
           }
-        );
+        });
+
+        // Enlarging & shrinking effect:
+        // Enters small (0.82) -> peaks at full glory (1.06) in center -> shrinks back (0.82) on exit
+        cutoutTl
+          .fromTo(cutoutText,
+            { scale: 0.82, opacity: 0.40, y: -12 },
+            { scale: 1.06, opacity: 1, y: -12, ease: 'power1.out', duration: 1 }
+          )
+          .to(cutoutText,
+            { scale: 0.82, opacity: 0.40, y: -12, ease: 'power1.in', duration: 1 }
+          );
       }
     }
 
