@@ -49,9 +49,16 @@
 <link rel="preload" as="image" href="/static/images/hero-poster.jpg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Mrs+Saint+Delafield&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Mrs+Saint+Delafield&display=swap"/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Protest+Revolution&family=Abril+Fatface&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Protest+Revolution&family=Abril+Fatface&display=swap"/>
 <style>
+@font-face {
+  font-family: 'Protest Revolution';
+  src: url('/static/fonts/ProtestRevolution-Latin.woff2') format('woff2');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
 @font-face {
   font-family: 'Amsterdam Signature';
   src: url('/static/fonts/Amsterdam%20Signature.woff2') format('woff2'),
@@ -83,7 +90,7 @@
   /* ── HERO TUNING & TYPOGRAPHY SYSTEM TOKENS ── */
   --hero-blur: 7px;
   --page-gutter: 42px;
-  --font-signature: "Amsterdam Signature", "Johnathan", "Mrs Saint Delafield", cursive;
+  --font-signature: "Protest Revolution", "Abril Fatface", "Playfair Display", serif;
   --font-hero: "Times New Roman", Times, "Liberation Serif", serif;
 
   /* ── STRICT 5-COLOUR SOURCE OF TRUTH (Physical Dye-in-Water Model) ── */
@@ -546,12 +553,12 @@ nav.scrolled{
   text-align: left;
 }
 
-/* Handwritten Signature in Amsterdam Signature (All-Caps USHSS) */
+/* Handwritten Signature in Protest Revolution (All-Caps USHSS) */
 .hero-signature-wrap {
   width: 100%;
-  max-width: clamp(200px, 26vw, 420px);
+  max-width: clamp(220px, 28vw, 460px);
   height: auto;
-  aspect-ratio: 520 / 160;
+  aspect-ratio: 540 / 160;
   margin-bottom: clamp(0.5rem, 1.2vh, 1rem);
   display: flex;
   align-items: center;
@@ -569,9 +576,15 @@ nav.scrolled{
   fill: var(--mist-200);
   filter: drop-shadow(0 0 10px rgba(78, 174, 192, 0.55));
 }
-#pen-tip {
-  pointer-events: none;
-  filter: drop-shadow(0 0 8px var(--teal-300));
+.mask-path {
+  fill: none;
+  stroke: #FFFFFF;
+  stroke-width: 32;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pathLength: 1;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
 }
 
 /* Staggered items initial hidden state */
@@ -1928,35 +1941,30 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
       <div class="hero-left-col">
-        <!-- Handwritten Signature in Amsterdam Signature (All-Caps USHSS) -->
+        <!-- Handwritten Signature in Protest Revolution (All-Caps USHSS with Centerline Mask Reveal) -->
         <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
-          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 520 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 540 160" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
-              <clipPath id="clip-u">
-                <rect id="rect-u" x="15" y="0" width="0" height="160" />
-              </clipPath>
-              <clipPath id="clip-s1">
-                <rect id="rect-s1" x="115" y="0" width="0" height="160" />
-              </clipPath>
-              <clipPath id="clip-h">
-                <rect id="rect-h" x="200" y="0" width="0" height="160" />
-              </clipPath>
-              <clipPath id="clip-s2">
-                <rect id="rect-s2" x="310" y="0" width="0" height="160" />
-              </clipPath>
-              <clipPath id="clip-s3">
-                <rect id="rect-s3" x="395" y="0" width="0" height="160" />
-              </clipPath>
+              <mask id="write-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="540" height="160">
+                <!-- Centerline reveal strokes in white (strictly sequential: U -> S -> H1,H2,H3 -> S -> S) -->
+                <path id="m-u" class="mask-path" d="M 34 22 L 34 98 C 34 135 70 135 70 98 L 70 22" />
+                <path id="m-s1" class="mask-path" d="M 168 44 C 165 20 128 18 128 46 C 128 76 166 80 166 104 C 166 134 126 134 122 108" />
+                <path id="m-h1" class="mask-path" d="M 230 22 L 230 130" />
+                <path id="m-h2" class="mask-path" d="M 264 22 L 264 130" />
+                <path id="m-h3" class="mask-path" d="M 226 78 L 268 78" />
+                <path id="m-s2" class="mask-path" d="M 373 44 C 370 20 333 18 333 46 C 333 76 371 80 371 104 C 371 134 331 134 327 108" />
+                <path id="m-s3" class="mask-path" d="M 468 44 C 465 20 428 18 428 46 C 428 76 466 80 466 104 C 466 134 426 134 422 108" />
+              </mask>
             </defs>
 
-            <text id="letter-u" class="sig-letter" x="20" y="115" clip-path="url(#clip-u)">U</text>
-            <text id="letter-s1" class="sig-letter" x="120" y="115" clip-path="url(#clip-s1)">S</text>
-            <text id="letter-h" class="sig-letter" x="205" y="115" clip-path="url(#clip-h)">H</text>
-            <text id="letter-s2" class="sig-letter" x="315" y="115" clip-path="url(#clip-s2)">S</text>
-            <text id="letter-s3" class="sig-letter" x="400" y="115" clip-path="url(#clip-s3)">S</text>
-
-            <!-- Glowing Pen Tip Lead Dot -->
-            <circle id="pen-tip" cx="20" cy="75" r="5" fill="#FFFFFF" opacity="0"/>
+            <!-- Real font glyphs revealed by write-mask -->
+            <g id="sig-text-group" mask="url(#write-mask)">
+              <text id="letter-u" class="sig-letter" x="20" y="115">U</text>
+              <text id="letter-s1" class="sig-letter" x="115" y="115">S</text>
+              <text id="letter-h" class="sig-letter" x="215" y="115">H</text>
+              <text id="letter-s2" class="sig-letter" x="320" y="115">S</text>
+              <text id="letter-s3" class="sig-letter" x="415" y="115">S</text>
+            </g>
           </svg>
         </div>
 
@@ -3045,72 +3053,60 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   function initHeroSequence(){
     document.documentElement.classList.add('site-loaded');
 
-    var penTip = document.getElementById('pen-tip');
+    var sigGroup = document.getElementById('sig-text-group');
 
-    var letterDefs = [
-      { id: 'rect-u', maxW: 100, dur: 0.25, startX: 20, endX: 115, y: 75, gap: 0.04 },
-      { id: 'rect-s1', maxW: 88, dur: 0.25, startX: 120, endX: 205, y: 75, gap: 0.04 },
-      { id: 'rect-h', maxW: 110, dur: 0.25, startX: 205, endX: 315, y: 75, gap: 0.04 },
-      { id: 'rect-s2', maxW: 88, dur: 0.25, startX: 315, endX: 400, y: 75, gap: 0.04 },
-      { id: 'rect-s3', maxW: 95, dur: 0.25, startX: 400, endX: 495, y: 75, gap: 0.0 }
+    var strokeDefs = [
+      { id: '#m-u', dur: 0.28, gap: 0.05 },
+      { id: '#m-s1', dur: 0.26, gap: 0.05 },
+      { id: '#m-h1', dur: 0.14, gap: 0.03 },
+      { id: '#m-h2', dur: 0.14, gap: 0.03 },
+      { id: '#m-h3', dur: 0.12, gap: 0.05 },
+      { id: '#m-s2', dur: 0.26, gap: 0.05 },
+      { id: '#m-s3', dur: 0.26, gap: 0.0 }
     ];
 
     if(prefersReduced || typeof gsap === 'undefined'){
-      letterDefs.forEach(function(l){
-        var el = document.getElementById(l.id);
-        if(el) el.setAttribute('width', l.maxW);
+      if(sigGroup) sigGroup.removeAttribute('mask');
+      strokeDefs.forEach(function(s){
+        var el = document.querySelector(s.id);
+        if(el) el.style.strokeDashoffset = '0';
       });
-      if(penTip) penTip.style.display = 'none';
       gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
       return;
     }
 
-    // Reset clip rects
-    letterDefs.forEach(function(l){
-      var el = document.getElementById(l.id);
-      if(el) el.setAttribute('width', '0');
+    // Reset mask strokes to initial hidden state
+    strokeDefs.forEach(function(s){
+      var el = document.querySelector(s.id);
+      if(el) el.style.strokeDashoffset = '1';
     });
 
     // Master Hero Timeline (starts ~0.2s after interactive)
     var heroTl = gsap.timeline({
       delay: 0.2,
-      defaults: { ease: 'power2.out' }
+      defaults: { ease: 'power2.inOut' }
     });
 
-    // Sequential reveal: letter N never starts until letter N-1 has fully finished (with 40ms pen lift gap)
-    letterDefs.forEach(function(l, idx){
-      heroTl.set(penTip, { attr: { cx: l.startX, cy: l.y } });
-      if(idx === 0){
-        heroTl.to(penTip, { opacity: 1, duration: 0.05, ease: 'power1.out' });
-      }
+    // Sequential stroke-by-stroke handwriting: invisible hand, no dots, natural speed modulation
+    strokeDefs.forEach(function(s){
+      heroTl.to(s.id, {
+        strokeDashoffset: 0,
+        duration: s.dur,
+        ease: 'power2.inOut'
+      });
 
-      var el = document.getElementById(l.id);
-      if(el){
-        heroTl.to(el, {
-          attr: { width: l.maxW },
-          duration: l.dur,
-          ease: 'power2.out'
-        });
-        heroTl.to(penTip, {
-          attr: { cx: l.endX },
-          duration: l.dur,
-          ease: 'power2.out'
-        }, "<");
-      }
-
-      if(l.gap > 0){
-        // Natural pen lift gap
-        heroTl.to(penTip, { opacity: 0.2, duration: l.gap * 0.5, ease: 'power1.in' });
-        heroTl.to(penTip, { opacity: 1, duration: l.gap * 0.5, ease: 'power1.out' });
+      if(s.gap > 0){
+        // Natural pen-lift pause (40-50ms)
+        heroTl.to({}, { duration: s.gap });
       }
     });
 
-    // Pen tip fades out cleanly at finish
-    if(penTip){
-      heroTl.to(penTip, { opacity: 0, duration: 0.15, ease: 'power1.out' });
-    }
+    // Remove mask when finished so final text is 100% crisp and identical to unmasked glyphs
+    heroTl.call(function(){
+      if(sigGroup) sigGroup.removeAttribute('mask');
+    });
 
-    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.4s)
+    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.5s)
     heroTl.fromTo('.hero-stagger-item',
       { opacity: 0, y: 18 },
       {
@@ -3133,12 +3129,8 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         if(!isNaN(tVal)){
           heroTl.seek(tVal);
           heroTl.pause();
-          if(tVal >= 2.0){
-            letterDefs.forEach(function(l){
-              var el = document.getElementById(l.id);
-              if(el) el.setAttribute('width', l.maxW);
-            });
-            if(penTip) penTip.setAttribute('opacity', '0');
+          if(tVal >= 1.6){
+            if(sigGroup) sigGroup.removeAttribute('mask');
             gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
           }
         }
