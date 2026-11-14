@@ -405,15 +405,15 @@ nav.scrolled{
 /* ── EDITORIAL MOTION & NO-JS FALLBACKS ── */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
 .no-js .hero-stagger-item { opacity: 1 !important; transform: none !important; }
-.no-js #sig-clip-rect { width: 100% !important; }
-.no-js #sig-pen-tip { display: none !important; }
+.no-js .sig-stroke, .no-js .sig-stroke-in { stroke-dashoffset: 0 !important; }
+.no-js #pen-tip { display: none !important; }
 .btn-gold, .btn-outline { transition: color .25s, background-color .25s, border-color .25s, transform .25s, box-shadow .25s; }
 .btn-gold:hover, .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(74,14,14,.12); }
 .value-card, .prog-card, .faculty-card { will-change: transform; }
 @media (prefers-reduced-motion: reduce) {
   .hero-stagger-item { opacity: 1 !important; transform: none !important; }
-  #sig-clip-rect { width: 100% !important; }
-  #sig-pen-tip { display: none !important; }
+  .sig-stroke, .sig-stroke-in { stroke-dashoffset: 0 !important; }
+  #pen-tip { display: none !important; }
   .hero-video { animation: none !important; }
   .btn-gold, .btn-outline { transition: none !important; }
 }
@@ -469,15 +469,16 @@ nav.scrolled{
   will-change: filter, backdrop-filter;
 }
 
-/* Layer 2: Duotone Dye Overlay, Luminous Gradient & Bottom Vignette */
+/* Layer 2: Duotone Dye Overlay, Soft Scrim & Bottom Vignette */
 .hero-tint-overlay {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
   background:
-    radial-gradient(circle at 55% 42%, rgba(18, 78, 102, 0.08) 0%, rgba(33, 42, 49, 0.28) 55%, rgba(33, 42, 49, 0.72) 85%, #212A31 100%),
-    linear-gradient(to bottom, rgba(33, 42, 49, 0.40) 0%, transparent 35%, rgba(33, 42, 49, 0.45) 70%, #212A31 100%);
+    radial-gradient(circle at 45% 42%, rgba(18, 78, 102, 0.06) 0%, rgba(33, 42, 49, 0.22) 55%, rgba(33, 42, 49, 0.55) 85%, #212A31 100%),
+    linear-gradient(to right, transparent 0%, transparent 40%, rgba(33, 42, 49, 0.35) 65%, rgba(33, 42, 49, 0.62) 100%),
+    linear-gradient(to bottom, rgba(33, 42, 49, 0.35) 0%, transparent 30%, rgba(33, 42, 49, 0.40) 70%, #212A31 100%);
 }
 
 /* Layer 3: Fine SVG Film Grain (3.5% opacity) to eliminate banding */
@@ -506,31 +507,34 @@ nav.scrolled{
   box-sizing: border-box;
 }
 
-/* Left Column: Signature + Eyebrow + Headline + Desc + Actions with Soft Scrim */
-.hero-left-col {
+/* Content Area: Right-Aligned Column holding Signature + Content */
+.hero-content-area {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+
+/* Right Content Column: width min(560px, 46vw), aligned with nav CONTACT button margin, text left-aligned */
+.hero-right-col {
   position: relative;
   z-index: 2;
-  max-width: clamp(340px, 48vw, 660px);
+  width: min(560px, 46vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-}
-.hero-left-col::before {
-  content: '';
-  position: absolute;
-  inset: -2.5rem -3.5rem -2.5rem -3rem;
-  background: radial-gradient(ellipse at 28% 42%, rgba(33, 42, 49, 0.76) 0%, rgba(33, 42, 49, 0.38) 65%, transparent 100%);
-  pointer-events: none;
-  z-index: -1;
-  border-radius: 28px;
+  text-align: left;
 }
 
-/* Handwritten Signature */
+/* Handwritten Centerline Signature (All-Caps USHSS) */
 .hero-signature-wrap {
   width: 100%;
-  max-width: clamp(280px, 42vw, 580px);
-  height: clamp(96px, 16vw, 240px);
-  margin-bottom: clamp(0.2rem, 0.8vh, 0.8rem);
+  max-width: clamp(140px, 22vw, 360px);
+  height: auto;
+  aspect-ratio: 430 / 150;
+  margin-bottom: clamp(0.5rem, 1.2vh, 1rem);
   display: flex;
   align-items: center;
   overflow: visible;
@@ -541,13 +545,25 @@ nav.scrolled{
   height: 100%;
   overflow: visible;
 }
-.hero-sig-text {
-  font-family: var(--font-signature);
-  font-size: clamp(110px, 15vw, 152px);
-  fill: var(--mist-200);
-  letter-spacing: 2px;
-  user-select: none;
-  filter: drop-shadow(0 0 16px rgba(78, 174, 192, 0.45));
+.sig-stroke {
+  fill: none;
+  stroke: var(--mist-200);
+  stroke-width: 5.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 10px rgba(78, 174, 192, 0.55));
+}
+.sig-stroke-in {
+  fill: none;
+  stroke: #FFFFFF;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  opacity: 0.9;
+}
+#pen-tip {
+  pointer-events: none;
+  filter: drop-shadow(0 0 8px var(--teal-300));
 }
 
 /* Staggered items initial hidden state */
@@ -572,6 +588,7 @@ nav.scrolled{
   color: var(--teal-300);
   font-weight: 600;
   text-transform: uppercase;
+  text-shadow: 0 1px 12px rgba(33, 42, 49, 0.6);
 }
 .hero-eyebrow::before {
   content: '';
@@ -588,13 +605,14 @@ nav.scrolled{
 }
 .hero-tagline {
   font-family: var(--font-hero);
-  font-size: clamp(2.3rem, 4.4vw, 4.2rem);
+  font-size: clamp(2.3rem, 4.2vw, 4.1rem);
   font-weight: 400;
   line-height: 1.08;
   letter-spacing: -0.015em;
   color: var(--mist-200);
   margin: 0;
   user-select: none;
+  text-shadow: 0 1px 12px rgba(33, 42, 49, 0.65);
 }
 .hero-tagline-accent {
   font-style: italic;
@@ -612,8 +630,8 @@ nav.scrolled{
   color: var(--mist-200);
   opacity: 0.95;
   margin: 0;
-  max-width: 540px;
-  text-shadow: 0 2px 14px rgba(33, 42, 49, 0.9);
+  max-width: 520px;
+  text-shadow: 0 1px 12px rgba(33, 42, 49, 0.7);
 }
 
 /* Action Buttons */
@@ -716,18 +734,33 @@ nav.scrolled{
 
 /* Responsive adjustments */
 @media (max-width: 900px) {
-  .hero-stage-container {
-    padding: 4.8rem 1.25rem 1.2rem;
+  .hero-editorial {
+    min-height: 100svh;
+    height: auto;
+    padding-bottom: 2rem;
   }
-  .hero-left-col {
+  .hero-stage-container {
+    height: auto;
+    min-height: 100svh;
+    padding: 5rem 1.25rem 1.5rem;
+    gap: 1.5rem;
+  }
+  .hero-tint-overlay {
+    background:
+      radial-gradient(circle at 50% 30%, rgba(18, 78, 102, 0.08) 0%, rgba(33, 42, 49, 0.3) 60%, #212A31 100%),
+      linear-gradient(to top, rgba(33, 42, 49, 0.85) 0%, rgba(33, 42, 49, 0.65) 45%, rgba(33, 42, 49, 0.25) 75%, transparent 100%);
+  }
+  .hero-content-area {
+    justify-content: flex-start;
+    flex: none;
+  }
+  .hero-right-col {
+    width: 100%;
     max-width: 100%;
   }
-  .hero-left-col::before {
-    inset: -1.5rem -1.2rem;
-  }
   .hero-signature-wrap {
-    max-width: 85%;
-    height: clamp(80px, 18vw, 130px);
+    max-width: 80%;
+    margin-bottom: 0.6rem;
   }
   .hero-tagline {
     font-size: clamp(1.85rem, 7.8vw, 2.5rem);
@@ -737,28 +770,32 @@ nav.scrolled{
     display: block;
   }
   .hero-sub {
-    font-size: 14.5px;
-    line-height: 1.55;
-    margin-bottom: 1.2rem;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .hero-actions {
+    margin-bottom: 1rem;
   }
   .hero-bottom-bar {
     flex-direction: column;
     align-items: stretch;
-    gap: 1rem;
-    padding-top: 0.6rem;
+    gap: 0.8rem;
+    padding-top: 0;
+    margin-top: 0;
   }
   .hero-stats-chips {
     grid-template-columns: repeat(2, 1fr);
     gap: 0.65rem;
   }
   .stat-chip {
-    padding: 9px 12px;
+    padding: 8px 12px;
   }
   .stat-chip-num {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
   }
   .stat-chip-lbl {
-    font-size: 9.5px;
+    font-size: 9px;
   }
   .hero-scroll-cue {
     display: none;
@@ -1827,49 +1864,59 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
   <div class="hero-stage-container">
     <h1 class="sr-only">University School of Humanities &amp; Social Sciences (USHSS) — GGSIPU</h1>
 
-    <!-- Left Column: Handwritten Signature + Times New Roman Content with Soft Scrim -->
-    <div class="hero-left-col">
-      <!-- Handwritten Signature (Gravity Signature / Mrs Saint Delafield) -->
-      <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
-        <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 760 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <filter id="sig-glow" x="-20%" y="-20%" width="140%" height="140%">
-              <feGaussianBlur in="SourceGraphic" stdDeviation="3.2" result="blur"/>
-              <feMerge>
-                <feMergeNode in="blur"/>
-                <feMergeNode in="SourceGraphic"/>
-              </feMerge>
-            </filter>
-            <clipPath id="sig-clip" clipPathUnits="userSpaceOnUse">
-              <rect id="sig-clip-rect" x="0" y="-30" width="0" height="280" />
-            </clipPath>
-          </defs>
-          <g clip-path="url(#sig-clip)" filter="url(#sig-glow)">
-            <text id="sig-text-elem" class="hero-sig-text" x="12" y="145">USHSS</text>
-          </g>
-          <circle id="sig-pen-tip" cx="12" cy="130" r="4.5" fill="#FFFFFF" filter="url(#sig-glow)" opacity="0"/>
-        </svg>
-      </div>
+    <!-- Right-Aligned Content Area -->
+    <div class="hero-content-area">
+      <div class="hero-right-col">
+        <!-- Handwritten Signature (Sequential Centerline Strokes in All Caps USHSS) -->
+        <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
+          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 430 150" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <g id="sig-group" transform="skewX(-6)">
+              <!-- Primary Outer Stroke (mist-200 with soft teal-300 glow) -->
+              <g class="sig-outer">
+                <path id="strk-u" class="sig-stroke" d="M 30 24 C 27 64 24 104 38 120 C 52 134 78 126 86 96 C 90 74 92 46 94 24" />
+                <path id="strk-s1" class="sig-stroke" d="M 166 38 C 158 20 126 18 120 42 C 114 62 168 74 166 100 C 164 126 128 128 118 108" />
+                <path id="strk-h1" class="sig-stroke" d="M 196 24 L 190 124" />
+                <path id="strk-h2" class="sig-stroke" d="M 264 22 L 258 124" />
+                <path id="strk-h3" class="sig-stroke" d="M 192 74 C 216 71 240 73 260 73" />
+                <path id="strk-s2" class="sig-stroke" d="M 334 38 C 326 20 294 18 288 42 C 282 62 336 74 334 100 C 332 126 296 128 286 108" />
+                <path id="strk-s3" class="sig-stroke" d="M 406 38 C 398 20 366 18 360 42 C 354 62 408 74 406 100 C 404 126 368 128 358 108" />
+              </g>
+              <!-- Faint Second Pass (Pen Pressure Effect) -->
+              <g class="sig-inner">
+                <path id="in-u" class="sig-stroke-in" d="M 30 24 C 27 64 24 104 38 120 C 52 134 78 126 86 96 C 90 74 92 46 94 24" />
+                <path id="in-s1" class="sig-stroke-in" d="M 166 38 C 158 20 126 18 120 42 C 114 62 168 74 166 100 C 164 126 128 128 118 108" />
+                <path id="in-h1" class="sig-stroke-in" d="M 196 24 L 190 124" />
+                <path id="in-h2" class="sig-stroke-in" d="M 264 22 L 258 124" />
+                <path id="in-h3" class="sig-stroke-in" d="M 192 74 C 216 71 240 73 260 73" />
+                <path id="in-s2" class="sig-stroke-in" d="M 334 38 C 326 20 294 18 288 42 C 282 62 336 74 334 100 C 332 126 296 128 286 108" />
+                <path id="in-s3" class="sig-stroke-in" d="M 406 38 C 398 20 366 18 360 42 C 354 62 408 74 406 100 C 404 126 368 128 358 108" />
+              </g>
+              <!-- Glowing Pen Tip Lead Dot -->
+              <circle id="pen-tip" cx="30" cy="24" r="5" fill="#FFFFFF" opacity="0"/>
+            </g>
+          </svg>
+        </div>
 
-      <!-- Eyebrow (Times New Roman, Small Caps, Teal-300) -->
-      <div class="hero-stagger-item hero-eyebrow-wrap">
-        <span class="hero-eyebrow">University School of Humanities &amp; Social Sciences</span>
-      </div>
+        <!-- Eyebrow (Times New Roman, Small Caps, Teal-300) -->
+        <div class="hero-stagger-item hero-eyebrow-wrap">
+          <span class="hero-eyebrow">University School of Humanities &amp; Social Sciences</span>
+        </div>
 
-      <!-- Tagline / Headline (Times New Roman, Where Ideas Shape Society) -->
-      <div class="hero-stagger-item hero-tagline-wrap">
-        <h2 class="hero-tagline">Where Ideas <span class="tagline-break"><em class="hero-tagline-accent">Shape Society</em></span></h2>
-      </div>
+        <!-- Tagline / Headline (Times New Roman, Where Ideas Shape Society) -->
+        <div class="hero-stagger-item hero-tagline-wrap">
+          <h2 class="hero-tagline">Where Ideas <span class="tagline-break"><em class="hero-tagline-accent">Shape Society</em></span></h2>
+        </div>
 
-      <!-- Description Paragraph (Times New Roman, Mist-200) -->
-      <div class="hero-stagger-item hero-desc-wrap">
-        <p class="hero-sub">A centre of academic excellence at GGSIPU, dedicated to the study of human culture, society, and thought — fostering critical minds and compassionate scholars.</p>
-      </div>
+        <!-- Description Paragraph (Times New Roman, Mist-200) -->
+        <div class="hero-stagger-item hero-desc-wrap">
+          <p class="hero-sub">A centre of academic excellence at GGSIPU, dedicated to the study of human culture, society, and thought — fostering critical minds and compassionate scholars.</p>
+        </div>
 
-      <!-- Action Buttons (Times New Roman, Liquid-Glass) -->
-      <div class="hero-stagger-item hero-actions">
-        <a href="#programmes" class="btn-gold">Explore Programmes</a>
-        <a href="#about" class="btn-outline">Learn More</a>
+        <!-- Action Buttons (Times New Roman, Liquid-Glass) -->
+        <div class="hero-stagger-item hero-actions">
+          <a href="#programmes" class="btn-gold">Explore Programmes</a>
+          <a href="#about" class="btn-outline">Learn More</a>
+        </div>
       </div>
     </div>
 
@@ -2935,74 +2982,97 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   function initHeroSequence(){
     document.documentElement.classList.add('site-loaded');
 
-    var clipRect = document.getElementById('sig-clip-rect');
-    var penTip = document.getElementById('sig-pen-tip');
-    var textElem = document.getElementById('sig-text-elem');
+    var penTip = document.getElementById('pen-tip');
+
+    var strokes = [
+      { id: 'strk-u', inId: 'in-u', dur: 0.26, gap: 0.04 },
+      { id: 'strk-s1', inId: 'in-s1', dur: 0.23, gap: 0.04 },
+      { id: 'strk-h1', inId: 'in-h1', dur: 0.14, gap: 0.03 },
+      { id: 'strk-h2', inId: 'in-h2', dur: 0.14, gap: 0.03 },
+      { id: 'strk-h3', inId: 'in-h3', dur: 0.13, gap: 0.04 },
+      { id: 'strk-s2', inId: 'in-s2', dur: 0.23, gap: 0.04 },
+      { id: 'strk-s3', inId: 'in-s3', dur: 0.23, gap: 0.0 }
+    ];
+
+    var strokeData = [];
+    strokes.forEach(function(s){
+      var el = document.getElementById(s.id);
+      var inEl = document.getElementById(s.inId);
+      if(el && inEl){
+        var len = el.getTotalLength ? el.getTotalLength() : 150;
+        el.style.strokeDasharray = len + ' ' + len;
+        el.style.strokeDashoffset = len;
+        inEl.style.strokeDasharray = len + ' ' + len;
+        inEl.style.strokeDashoffset = len;
+        var startPt = el.getPointAtLength ? el.getPointAtLength(0) : { x: 30, y: 24 };
+        strokeData.push({ el: el, inEl: inEl, len: len, dur: s.dur, gap: s.gap, startPt: startPt });
+      }
+    });
 
     if(prefersReduced || typeof gsap === 'undefined'){
-      if(clipRect) clipRect.setAttribute('width', '800');
+      strokeData.forEach(function(s){
+        s.el.style.strokeDashoffset = 0;
+        s.inEl.style.strokeDashoffset = 0;
+      });
       if(penTip) penTip.style.display = 'none';
       gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
       return;
     }
 
-    // Default target width calibrated to USHSS script size (~580px)
-    var targetWidth = 590;
-    try {
-      if(textElem && textElem.getBBox){
-        var bbox = textElem.getBBox();
-        if(bbox && bbox.width > 120){
-          targetWidth = Math.min(bbox.width + 30, 740);
-        }
-      }
-    } catch(e){}
-
-    // Master Hero Timeline (starts ~0.2s after interactive)
+    // Master Hero Timeline (starts ~0.15s after interactive)
     var heroTl = gsap.timeline({
-      delay: 0.2,
-      defaults: { ease: 'power2.out' }
+      delay: 0.15,
+      defaults: { ease: 'power2.inOut' }
     });
 
-    // Reveal glowing pen tip at starting position
-    if(penTip){
-      heroTl.set(penTip, { attr: { cx: 12, cy: 130 }, opacity: 0 });
-      heroTl.to(penTip, { opacity: 1, duration: 0.12, ease: 'power1.out' });
-    }
-
-    // Fast cursive handwriting (1.25s) with undulating pen-tip tracking
-    heroTl.to('#sig-clip-rect', {
-      attr: { width: targetWidth },
-      duration: 1.28,
-      ease: 'power2.out',
-      onUpdate: function(){
-        if(penTip && clipRect){
-          var curW = parseFloat(clipRect.getAttribute('width')) || 0;
-          var p = targetWidth > 0 ? (curW / targetWidth) : 0;
-          penTip.setAttribute('cx', Math.max(12, curW));
-          var waveY = 130 + Math.sin(p * Math.PI * 5.2) * 16;
-          penTip.setAttribute('cy', waveY);
-        }
+    // Sequential Stroke by Stroke Handwriting
+    strokeData.forEach(function(s, idx){
+      heroTl.set(penTip, { attr: { cx: s.startPt.x, cy: s.startPt.y } });
+      if(idx === 0){
+        heroTl.to(penTip, { opacity: 1, duration: 0.06, ease: 'power1.out' });
       }
-    }, '<');
+
+      heroTl.to(s.el, {
+        strokeDashoffset: 0,
+        duration: s.dur,
+        ease: 'power2.inOut',
+        onUpdate: function(){
+          var curOff = parseFloat(s.el.style.strokeDashoffset) || 0;
+          s.inEl.style.strokeDashoffset = curOff;
+          var progLen = s.len - curOff;
+          if(penTip && s.el.getPointAtLength && progLen >= 0 && progLen <= s.len){
+            var pt = s.el.getPointAtLength(progLen);
+            penTip.setAttribute('cx', pt.x);
+            penTip.setAttribute('cy', pt.y);
+          }
+        }
+      });
+
+      if(s.gap > 0){
+        // Natural pen lift gap
+        heroTl.to(penTip, { opacity: 0.2, duration: s.gap * 0.4, ease: 'power1.in' });
+        heroTl.to(penTip, { opacity: 1, duration: s.gap * 0.6, ease: 'power1.out' });
+      }
+    });
 
     // Pen tip fades out cleanly at finish
     if(penTip){
-      heroTl.to(penTip, { opacity: 0, duration: 0.15, ease: 'power1.out' }, '-=0.1');
+      heroTl.to(penTip, { opacity: 0, duration: 0.15, ease: 'power1.out' });
     }
 
-    // Staggered fade/slide in of hero content starting as last letter finishes (~1.3s)
-    // 80-90ms apart, 500ms ease-out
+    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.5s)
+    // 80-100ms apart, 500ms ease-out
     heroTl.fromTo('.hero-stagger-item',
       { opacity: 0, y: 18 },
       {
         opacity: 1,
         y: 0,
         duration: 0.5,
-        stagger: 0.085,
+        stagger: 0.09,
         ease: 'power2.out',
         clearProps: 'transform'
       },
-      '-=0.15'
+      '+=0.04'
     );
 
     // Support timestamp seeking & frame capture verification via ?t=<seconds>
@@ -3012,15 +3082,17 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       if(forceTime !== null){
         var tVal = parseFloat(forceTime);
         if(!isNaN(tVal)){
-          var localTime = Math.max(0, tVal - 0.2);
-          heroTl.seek(localTime);
+          heroTl.seek(tVal);
           heroTl.pause();
-          if(tVal <= 0){
-            if(clipRect) clipRect.setAttribute('width', '0');
-            if(penTip) penTip.setAttribute('opacity', '0');
-            gsap.set('.hero-stagger-item', { opacity: 0, y: 18 });
-          } else if(tVal >= 2.0){
-            if(clipRect) clipRect.setAttribute('width', targetWidth);
+          // Synchronize strokeDashoffset for both passes on seek
+          strokeData.forEach(function(s){
+            s.inEl.style.strokeDashoffset = s.el.style.strokeDashoffset;
+          });
+          if(tVal >= 2.0){
+            strokeData.forEach(function(s){
+              s.el.style.strokeDashoffset = 0;
+              s.inEl.style.strokeDashoffset = 0;
+            });
             if(penTip) penTip.setAttribute('opacity', '0');
             gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
           }
