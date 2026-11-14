@@ -46,10 +46,11 @@
 }
 </script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;rect width='100' height='100' rx='20' fill='%23071B2B'/&gt;&lt;text x='50' y='65' font-size='46' font-family='serif' font-weight='bold' fill='%23B9E4E8' text-anchor='middle'&gt;G&lt;/text&gt;&lt;/svg&gt;"/>
+<link rel="preload" as="image" href="/static/images/hero-poster.jpg"/>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap"/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500&display=swap"/>
+<link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&display=swap"/>
 <style>
 :root{
   /* ── STRICT 5-COLOUR SOURCE OF TRUTH (Physical Dye-in-Water Model) ── */
@@ -113,20 +114,6 @@
   --radius-lg: 16px;
 }
 
-/* ── PRELOADER ── */
-.preloader{position:fixed;inset:0;z-index:9999;background:var(--cream);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .6s var(--ease-out),visibility .6s;cursor:pointer}
-.preloader.loaded{opacity:0;visibility:hidden;pointer-events:none}
-.preloader-word{font-family:'Playfair Display',serif;font-size:clamp(2.5rem,6vw,4rem);font-weight:700;color:var(--maroon-deep);letter-spacing:.08em;overflow:hidden}
-.preloader-word span{display:inline-block;transform:translateY(110%);animation:preloaderReveal .6s var(--ease-out) forwards}
-.preloader-word span:nth-child(2){animation-delay:.06s}
-.preloader-word span:nth-child(3){animation-delay:.12s}
-.preloader-word span:nth-child(4){animation-delay:.18s}
-.preloader-word span:nth-child(5){animation-delay:.24s}
-.preloader-bar{width:120px;height:2px;background:var(--border);margin-top:1.5rem;border-radius:2px;overflow:hidden;position:relative}
-.preloader-bar::after{content:'';position:absolute;inset:0;background:var(--gold);transform-origin:left;animation:preloaderBar 1.6s var(--ease-in-out) forwards}
-@keyframes preloaderReveal{to{transform:translateY(0)}}
-@keyframes preloaderBar{0%{transform:scaleX(0)}100%{transform:scaleX(1)}}
-
 /* ── CUSTOM CURSOR (desktop only) ── */
 @media(hover:hover){
   .cursor-dot{position:fixed;top:0;left:0;width:8px;height:8px;background:var(--maroon);border-radius:50%;pointer-events:none;z-index:9998;mix-blend-mode:difference;transform:translate(-50%,-50%) scale(1);transition:transform .15s var(--ease-out),width .2s,height .2s,background .2s;will-change:transform}
@@ -180,6 +167,17 @@ nav.scrolled{
   background:rgba(33,42,49,0.88);
   border-color:rgba(78,174,192,0.38);
   box-shadow:0 22px 52px rgba(33,42,49,0.65),0 2px 8px rgba(0,0,0,0.2),inset 0 1.5px 1px rgba(211,217,212,0.5),inset 0 -1px 1px rgba(78,174,192,0.35);
+}
+nav.nav-intro-hidden{
+  transform: translate(-50%, -110px) !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+nav.nav-intro-visible{
+  transform: translateX(-50%) !important;
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  transition: transform 0.85s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease !important;
 }
 .nav-brand{display:flex;align-items:center;gap:12px;text-decoration:none;z-index:1}
 .nav-logo{
@@ -400,31 +398,10 @@ nav.scrolled{
 .portal-reg-select option{background:var(--ink-700);color:var(--mist-200)}
 .portal-login-card.wide{width:min(560px,100%)}
 
-/* ── SUBTLE EDITORIAL MOTION ── */
-/* Hero elements start hidden; revealed by GSAP after preloader */
-html:not(.site-loaded) .hero .hero-eyebrow,
-html:not(.site-loaded) .hero h1,
-html:not(.site-loaded) .hero .hero-sub,
-html:not(.site-loaded) .hero .hero-actions,
-html:not(.site-loaded) .hero .hero-stats,
-html:not(.site-loaded) .hero-editorial-panel{
-  opacity:0;transform:translateY(24px);
-}
-@keyframes heroRiseIn {
-  from { opacity: 0; transform: translateY(18px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes heroRuleGrow {
-  from { transform: scaleX(0); transform-origin:left; }
-  to { transform: scaleX(1); transform-origin:left; }
-}
-/* Hero animations now driven by GSAP; CSS keyframes kept as fallback for no-JS */
-.no-js .hero .hero-eyebrow { animation: heroRiseIn .65s .08s both; }
-.no-js .hero h1 { animation: heroRiseIn .8s .18s both; }
-.no-js .hero .hero-sub { animation: heroRiseIn .75s .3s both; }
-.no-js .hero .hero-actions { animation: heroRiseIn .7s .42s both; }
-.no-js .hero .hero-stats { animation: heroRiseIn .75s .54s both; }
-.no-js .hero .hero-left::after { animation: heroRuleGrow 1s .3s both; }
+/* ── EDITORIAL MOTION & NO-JS FALLBACKS ── */
+.no-js .hero-editorial-content { opacity: 1 !important; }
+.no-js .hero-handwrite-stage { display: none !important; }
+.no-js nav.nav-intro-hidden { transform: translateX(-50%) !important; opacity: 1 !important; pointer-events: auto !important; }
 .btn-gold, .btn-outline { transition: color .25s, background-color .25s, border-color .25s, transform .25s, box-shadow .25s; }
 .btn-gold:hover, .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(74,14,14,.12); }
 .value-card, .prog-card, .faculty-card { will-change: transform; }
@@ -434,32 +411,359 @@ html:not(.site-loaded) .hero-editorial-panel{
   .btn-gold, .btn-outline { transition: none !important; }
 }
 
-/* ── HERO ── */
-.hero{min-height:100vh;display:grid;grid-template-columns:1fr 1fr;position:relative;overflow:hidden}
-.hero-left{padding:10rem 3.5rem 5rem;display:flex;flex-direction:column;justify-content:center;position:relative;z-index:2}
-.hero-eyebrow{font-size:11px;letter-spacing:2.5px;text-transform:uppercase;color:var(--teal-300);font-weight:500;margin-bottom:1.5rem;display:flex;align-items:center;gap:10px}
-.hero-eyebrow::before{content:'';width:32px;height:1px;background:var(--teal-300);display:block}
-.hero h1{font-family:'Playfair Display',serif;font-size:clamp(2.6rem,5vw,4.2rem);line-height:1.12;font-weight:700;color:var(--mist-200);margin-bottom:1.5rem}
-.hero h1 em{font-style:italic;color:var(--teal-300)}
-.hero-sub{font-family:'EB Garamond',serif;font-size:1.15rem;color:var(--mist-200);opacity:0.9;line-height:1.8;margin-bottom:2.5rem;max-width:460px}
-.hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
-.hero-stats{display:flex;gap:2.5rem;margin-top:3rem;padding-top:2.5rem;border-top:1px solid rgba(211,217,212,0.18)}
-.stat{display:flex;flex-direction:column}
-.stat-num{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--mist-200);line-height:1}
-.stat-lbl{font-size:11px;color:var(--slate-400);text-transform:uppercase;letter-spacing:1px;margin-top:5px}
+/* ── FULL-BLEED SOFT-FOCUS VIDEO EDITORIAL HERO ── */
+.hero-editorial {
+  min-height: 100svh;
+  height: 100svh;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 0 0 clamp(2.2rem, 3.8vh, 3.5rem);
+  background: var(--ink-900);
+  isolation: isolate;
+}
 
-.hero-right{position:relative;overflow:hidden}
-.hero-img-grid{position:absolute;inset:0;display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:3px}
-.hero-img-cell{overflow:hidden;position:relative}
-.hero-img-cell::after{content:'';position:absolute;inset:0;background:rgba(74,14,14,0.35)}
-.hero-img-cell img{width:100%;height:100%;object-fit:cover;filter:sepia(20%) contrast(110%)}
-.hero-img-cell:nth-child(1){grid-row:1/3}
-.hero-overlay-text{position:absolute;bottom:2.5rem;right:2.5rem;z-index:3;text-align:right}
-.hero-overlay-text p{font-family:'Playfair Display',serif;font-style:italic;font-size:1.1rem;color:rgba(255,255,255,0.85);line-height:1.5}
-.hero-overlay-text span{font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase}
+/* Layer 0: Background Video Container & Ken Burns */
+.hero-video-wrap {
+  position: absolute;
+  inset: -6%;
+  width: 112%;
+  height: 112%;
+  overflow: hidden;
+  z-index: 1;
+  pointer-events: none;
+  transform-origin: center center;
+  will-change: transform;
+}
+.hero-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  animation: heroKenBurns 20s ease-in-out infinite alternate;
+  will-change: transform;
+}
+@keyframes heroKenBurns {
+  0% { transform: scale(1.0); }
+  100% { transform: scale(1.08); }
+}
 
-/* decorative vertical line */
-.hero-left::after{content:'';position:absolute;top:12%;bottom:12%;right:0;width:1px;background:linear-gradient(to bottom,transparent,var(--border) 30%,var(--border) 70%,transparent)}
+/* Layer 1: Lens Defocus Blur */
+.hero-blur-layer {
+  position: absolute;
+  inset: -8%;
+  width: 116%;
+  height: 116%;
+  backdrop-filter: blur(28px) saturate(1.2);
+  -webkit-backdrop-filter: blur(28px) saturate(1.2);
+  z-index: 2;
+  pointer-events: none;
+  will-change: filter, backdrop-filter;
+}
+
+/* Layer 2: Duotone Dye Overlay, Luminous Spotlight & Bottom Vignette */
+.hero-tint-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 50% 42%, rgba(78, 174, 192, 0.20) 0%, rgba(18, 78, 102, 0.35) 40%, rgba(33, 42, 49, 0.85) 75%, #212A31 100%),
+    linear-gradient(to bottom, rgba(33, 42, 49, 0.55) 0%, transparent 40%, rgba(33, 42, 49, 0.75) 75%, #212A31 100%);
+}
+
+/* Layer 3: Fine SVG Film Grain (3.5% opacity) to eliminate banding */
+.hero-grain-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 4;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* Opening Handwritten Cursive Signature Stage (Centers USHSS) */
+.hero-handwrite-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  cursor: pointer;
+  background: transparent;
+  transform-origin: center center;
+  will-change: transform, opacity;
+}
+.handwrite-svg {
+  width: min(880px, 82vw);
+  max-height: 40vh;
+  overflow: visible;
+  filter: drop-shadow(0 0 25px rgba(78, 174, 192, 0.55)) drop-shadow(0 8px 30px rgba(33, 42, 49, 0.8));
+}
+.hw-path {
+  fill: none;
+  stroke: url(#signature-grad);
+  stroke-width: 4.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+#pen-tip-dot {
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.intro-skip-btn {
+  position: absolute;
+  top: clamp(1.2rem, 3vh, 2rem);
+  right: clamp(1.2rem, 3vw, 2.5rem);
+  z-index: 25;
+  background: rgba(33, 42, 49, 0.65);
+  border: 1px solid rgba(211, 217, 212, 0.22);
+  color: var(--mist-200);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  opacity: 0.85;
+  transition: all 0.25s var(--ease-spring);
+}
+.intro-skip-btn:hover {
+  opacity: 1;
+  background: rgba(18, 78, 102, 0.7);
+  border-color: var(--teal-300);
+  transform: translateY(-1px);
+}
+.skip-key {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: rgba(211, 217, 212, 0.15);
+  font-size: 9.5px;
+  color: var(--teal-300);
+}
+
+/* Layer 4: Main Editorial Stage */
+.hero-editorial-content {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 clamp(1.5rem, 4vw, 4rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  pointer-events: auto;
+  opacity: 0;
+  will-change: opacity, transform;
+}
+.hero-editorial-content.content-ready {
+  opacity: 1;
+}
+
+/* Eyebrow kicker */
+.hero-eyebrow-wrap {
+  margin-bottom: clamp(0.9rem, 1.6vh, 1.4rem);
+  overflow: hidden;
+}
+.hero-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(10.5px, 0.95vw, 12px);
+  font-weight: 600;
+  letter-spacing: 2.8px;
+  text-transform: uppercase;
+  color: var(--teal-300);
+}
+.hero-eyebrow::before {
+  content: '';
+  display: inline-block;
+  width: 28px;
+  height: 1.5px;
+  background: var(--teal-300);
+  box-shadow: 0 0 10px rgba(78, 174, 192, 0.6);
+}
+
+/* Giant Editorial Display Headline (Inspired by Jeff Koons Moon Phases) */
+.hero-giant-title {
+  margin: 0 0 clamp(1.4rem, 2.5vh, 2.4rem);
+  font-family: 'Inter Tight', 'Instrument Sans', -apple-system, sans-serif;
+  font-size: clamp(3.2rem, 8.4vw, 8.6rem);
+  font-weight: 200;
+  letter-spacing: -0.04em;
+  line-height: 0.94;
+  text-transform: uppercase;
+  user-select: none;
+}
+.hero-title-line {
+  display: block;
+  overflow: hidden;
+}
+.hero-title-word {
+  display: inline-block;
+  background: linear-gradient(135deg, #FFFFFF 0%, #E2E8E5 32%, #A0B6BA 65%, #4EAEC0 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+  filter: drop-shadow(0 4px 30px rgba(33, 42, 49, 0.65));
+}
+.hero-title-accent {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: -0.02em;
+  background: linear-gradient(135deg, #B9E4E8 0%, #4EAEC0 60%, #167D8D 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Lower Hero Grid: Left (Description & CTAs) + Right (Liquid Glass Stats Chips) */
+.hero-editorial-lower {
+  display: grid;
+  grid-template-columns: minmax(320px, 480px) 1fr;
+  align-items: flex-end;
+  gap: clamp(2rem, 4vw, 4.5rem);
+  margin-bottom: clamp(1.2rem, 2vh, 2rem);
+}
+.hero-desc-wrap {
+  display: flex;
+  flex-direction: column;
+}
+.hero-sub {
+  font-family: 'DM Sans', sans-serif;
+  font-size: clamp(0.95rem, 1.1vw, 1.08rem);
+  line-height: 1.75;
+  color: var(--mist-200);
+  opacity: 0.92;
+  margin: 0 0 1.8rem;
+  max-width: 460px;
+  text-shadow: 0 2px 14px rgba(33, 42, 49, 0.85);
+}
+.hero-actions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* 4 Liquid-Glass Stats Chips */
+.hero-stats-chips {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: clamp(0.75rem, 1.2vw, 1.25rem);
+  width: 100%;
+}
+.stat-chip {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: clamp(12px, 1.5vh, 16px) clamp(14px, 1.2vw, 20px);
+  border-radius: 16px;
+  background: rgba(211, 217, 212, 0.06);
+  border: 1px solid rgba(211, 217, 212, 0.20);
+  backdrop-filter: blur(20px) saturate(160%);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  box-shadow: 0 10px 28px rgba(33, 42, 49, 0.45), inset 0 1px 1px rgba(211, 217, 212, 0.35);
+  transition: transform 0.35s var(--ease-spring), border-color 0.3s, background 0.3s;
+}
+.stat-chip:hover {
+  transform: translateY(-3px) scale(1.025);
+  border-color: var(--teal-300);
+  background: rgba(78, 174, 192, 0.12);
+  box-shadow: 0 14px 34px rgba(18, 78, 102, 0.45), 0 0 20px rgba(78, 174, 192, 0.25), inset 0 1.2px 1px rgba(211, 217, 212, 0.6);
+}
+.stat-chip-num {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(1.4rem, 1.8vw, 1.85rem);
+  font-weight: 700;
+  color: var(--mist-200);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+.stat-chip-lbl {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--slate-400);
+  margin-top: 4px;
+}
+
+/* Centered Bobbing Scroll Indicator Chevron */
+.hero-scroll-cue {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: var(--mist-200);
+  opacity: 0.65;
+  transition: opacity 0.3s, transform 0.3s;
+  animation: scrollBob 2.4s ease-in-out infinite;
+  text-decoration: none;
+}
+.hero-scroll-cue:hover {
+  opacity: 1;
+  color: var(--teal-300);
+}
+@keyframes scrollBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(6px); }
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .hero-editorial-lower {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  .hero-stats-chips {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (max-width: 768px) {
+  .hero-giant-title {
+    font-size: clamp(2.8rem, 11vw, 5rem);
+    line-height: 0.98;
+  }
+  .hero-stats-chips {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
+  }
+  .hero-editorial {
+    padding-top: 5rem;
+  }
+}
+@media (max-width: 480px) {
+  .hero-giant-title {
+    font-size: clamp(2.35rem, 12vw, 3.8rem);
+  }
+  .hero-editorial-content {
+    padding: 0 1.25rem;
+  }
+  .stat-chip {
+    padding: 10px 14px;
+  }
+}
 
 /* ── CUTOUT TEXT SECTION ── */
 .cutout-section{
@@ -1069,7 +1373,7 @@ section[id] { scroll-margin-top: 88px; }
    NOTE: root tokens are defined once at top; only additive overrides below. */
 body { background:var(--cream); }
 .nav-links { gap:1.5rem; }
-.hero {
+.hero:not(.hero-editorial) {
   min-height: min(850px, 100svh);
   background:
     radial-gradient(ellipse at 78% 28%, rgba(18, 78, 102, 0.32), transparent 50%),
@@ -1079,12 +1383,6 @@ body { background:var(--cream); }
   position: relative;
   overflow: hidden;
 }
-.hero-left, .hero-right { position: relative; z-index: 2; }
-.hero-left { padding-top: 9rem; padding-bottom: 4rem; }
-.hero-eyebrow { color: var(--teal-300); letter-spacing: 2.2px; font-weight: 600; text-transform: uppercase; font-size: 11px; }
-.hero h1 { font-size: clamp(2.8rem, 4.8vw, 4.6rem); letter-spacing: -.035em; color: var(--mist-200); text-shadow: 0 4px 20px rgba(33,42,49,0.7); }
-.hero h1 em { color: var(--teal-300); font-style: italic; }
-.hero-sub { font-family: 'DM Sans', sans-serif; font-size: 1.05rem; line-height: 1.8; max-width: 460px; color: var(--mist-200); opacity: 0.88; }
 .btn-gold, .btn-outline {
   text-transform: none; letter-spacing: .25px; font-size: 14px;
   padding: 13px 24px; border-radius: 9999px;
@@ -1133,75 +1431,7 @@ body { background:var(--cream); }
 .btn-outline:active {
   transform: translateY(1px) scale(0.97, 1.02);
 }
-.hero-stats {
-  gap: 1.4rem 1.7rem; margin-top: 2.5rem; padding-top: 1.7rem;
-  flex-wrap: wrap; border-color: rgba(116, 141, 146, 0.25);
-}
-.stat { min-width: 82px; flex: 1 1 95px; }
-.stat-num { font-size: 1.9rem; color: var(--mist-200); font-weight: 700; }
-.stat-lbl { font-size: 10px; letter-spacing: .55px; line-height: 1.45; color: var(--slate-400); font-weight: 500; }
-.hero-right {
-  min-height: 620px; display: flex; align-items: stretch; justify-content: stretch;
-  padding: clamp(1.2rem, 3vw, 3rem);
-  isolation: isolate;
-}
-.hero-img-grid {
-  position: relative; inset: auto; width: 100%; min-height: 100%;
-  display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr;
-  perspective: 1200px; overflow: visible;
-}
-/* Liquid Glass Component 3: 3D Showcase Slab Tank */
-.hero-editorial-panel {
-  width: 100%; min-height: 100%; display: flex; flex-direction: column;
-  justify-content: center; padding: clamp(2.2rem, 5vw, 5rem);
-  color: var(--mist-200); position: relative; overflow: hidden;
-  border: 1px solid rgba(211, 217, 212, 0.25); border-radius: 24px;
-  background:
-    radial-gradient(circle at 80% 22%, rgba(78, 174, 192, 0.22), transparent 32%),
-    linear-gradient(145deg, rgba(211, 217, 212, 0.12), rgba(211, 217, 212, 0.02) 42%, rgba(33, 42, 49, 0.45)),
-    linear-gradient(135deg, rgba(18, 78, 102, 0.75) 0%, rgba(46, 57, 68, 0.90) 55%, rgba(33, 42, 49, 0.98) 100%);
-  backdrop-filter: blur(32px) saturate(180%);
-  -webkit-backdrop-filter: blur(32px) saturate(180%);
-  box-shadow: 0 32px 70px rgba(33, 42, 49, 0.65),
-              0 0 40px rgba(18, 78, 102, 0.22),
-              inset 0 1.5px 1.5px rgba(211, 217, 212, 0.45),
-              inset 0 -1.5px 1.5px rgba(78, 174, 192, 0.28);
-  transform: rotateY(-5deg) rotateX(2deg);
-  transform-style: preserve-3d;
-  transition: transform .55s cubic-bezier(.2, .7, .2, 1), box-shadow .55s;
-}
-.hero-editorial-panel:hover {
-  transform: rotateY(-1deg) rotateX(0) translateY(-7px);
-  box-shadow: 0 42px 85px rgba(33, 42, 49, 0.75), 0 0 50px rgba(78, 174, 192, 0.30),
-              inset 0 2px 2px rgba(211, 217, 212, 0.60);
-}
-.hero-editorial-panel::before {
-  content: ""; position: absolute; inset: 17px;
-  border: 1px solid rgba(78, 174, 192, 0.35);
-  border-radius: 16px; pointer-events: none; transform: translateZ(24px);
-}
-.hero-editorial-panel::after {
-  content: ""; position: absolute; width: 230px; height: 230px; right: -55px; top: -55px;
-  border-radius: 50%; pointer-events: none;
-  background: radial-gradient(circle at 32% 28%, #FFFFFF 0%, var(--mist-200) 20%, var(--teal-300) 45%, var(--teal-700) 70%, rgba(33, 42, 49, 0.2) 80%, transparent 84%);
-  opacity: .80; filter: drop-shadow(0 20px 25px rgba(33, 42, 49, 0.6));
-  transform: translateZ(45px);
-}
-.editorial-rule { width: 54px; height: 3px; background: linear-gradient(90deg, var(--teal-300), var(--mist-200)); margin-bottom: 1.6rem; box-shadow: 0 0 14px rgba(78, 174, 192, 0.5); }
-.editorial-kicker { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: var(--teal-300); position: relative; z-index: 1; font-weight: 600; }
-.editorial-heading {
-  font-family: 'Playfair Display', serif; font-size: clamp(2.5rem, 4.4vw, 4.5rem);
-  line-height: 1.06; letter-spacing: -.04em; margin-top: 1.1rem;
-  color: var(--mist-200); text-shadow: 0 5px 18px rgba(33, 42, 49, 0.6);
-  position: relative; z-index: 1; transform: translateZ(35px);
-}
-.editorial-heading em { color: var(--teal-300); font-weight: 400; font-style: italic; }
-.editorial-bottom {
-  display: flex; justify-content: space-between; gap: 1rem; margin-top: 3rem;
-  padding-top: 1rem; border-top: 1px solid rgba(78, 174, 192, 0.3);
-  color: var(--slate-400); font-size: 11px; letter-spacing: .5px;
-  position: relative; z-index: 1;
-}
+/* Obsolete split-hero panel replaced by full-bleed editorial hero */
 .marquee-strip {
   background: linear-gradient(90deg, #182026 0%, #2E3944 50%, #182026 100%);
   padding: 14px 0;
@@ -1406,20 +1636,12 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
   </defs>
 </svg>
 
-<!-- PRELOADER -->
-<div class="preloader" id="preloader" role="status" aria-label="Loading">
-  <div class="preloader-word" aria-hidden="true">
-    <span>U</span><span>S</span><span>H</span><span>S</span><span>S</span>
-  </div>
-  <div class="preloader-bar"></div>
-</div>
-
 <!-- CUSTOM CURSOR (desktop only) -->
 <div class="cursor-dot" id="cursor-dot" aria-hidden="true"></div>
 
 <!-- NAV -->
 <a class="skip-link" href="#home">Skip to main content</a>
-<nav id="navbar" aria-label="Main navigation">
+<nav id="navbar" class="nav-intro-hidden" aria-label="Main navigation">
   <a class="nav-brand" href="#home">
     <div class="nav-logo">GGS</div>
     <div class="nav-title">
@@ -1573,32 +1795,105 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
   </div>
 </div>
 
-<!-- HERO -->
-<section class="hero" id="home">
-  <div class="hero-left">
-    <div class="hero-eyebrow">University School of Humanities &amp; Social Sciences</div>
-    <h1>Where Ideas<br/><em>Shape Society</em></h1>
-    <p class="hero-sub">A centre of academic excellence at GGSIPU, dedicated to the study of human culture, society, and thought — fostering critical minds and compassionate scholars.</p>
-    <div class="hero-actions">
-      <a href="#programmes" class="btn-gold">Explore Programmes</a>
-      <a href="#about" class="btn-outline">Learn More</a>
-    </div>
-    <div class="hero-stats">
-      <div class="stat"><span class="stat-num">02</span><span class="stat-lbl">Core disciplines</span></div>
-      <div class="stat"><span class="stat-num">MA</span><span class="stat-lbl">English &amp; Economics</span></div>
-      <div class="stat"><span class="stat-num">PhD</span><span class="stat-lbl">Research pathway</span></div>
-      <div class="stat"><span class="stat-num">1998</span><span class="stat-lbl">University established</span></div>
-    </div>
+<!-- HERO (Full-Bleed Soft-Focus Video & Editorial Display) -->
+<section class="hero hero-editorial" id="home">
+  <!-- Layer 0 & 1: Video with Soft-Focus Lens Blur & Ken Burns -->
+  <div class="hero-video-wrap" aria-hidden="true">
+    <video
+      id="hero-video"
+      class="hero-video"
+      poster="/static/images/hero-poster.jpg"
+      autoplay
+      muted
+      loop
+      playsinline
+      preload="metadata">
+      <source src="/static/images/Video-42144.mp4" type="video/mp4">
+    </video>
+    <div class="hero-blur-layer"></div>
+    <div class="hero-tint-overlay"></div>
+    <div class="hero-grain-layer"></div>
   </div>
-  <div class="hero-right">
-    <div class="hero-img-grid">
-      <div class="hero-editorial-panel">
-      <div class="editorial-rule"></div>
-      <span class="editorial-kicker">Study · Question · Understand</span>
-      <p class="editorial-heading">Humanities<br/><em>&amp; Social Sciences</em></p>
-      <div class="editorial-bottom"><span>GGS Indraprastha University</span><span>New Delhi</span></div>
+
+  <!-- Opening Handwritten Cursive Signature Stage -->
+  <div class="hero-handwrite-stage" id="handwrite-stage" role="img" aria-label="USHSS">
+    <svg class="handwrite-svg" id="handwrite-svg" viewBox="0 0 1000 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="pen-glow" x="-25%" y="-25%" width="150%" height="150%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4.5" result="blur"/>
+          <feMerge>
+            <feMergeNode in="blur"/>
+            <feMergeNode in="SourceGraphic"/>
+          </feMerge>
+        </filter>
+        <linearGradient id="signature-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#FFFFFF"/>
+          <stop offset="45%" stop-color="#D3D9D4"/>
+          <stop offset="85%" stop-color="#4EAEC0"/>
+          <stop offset="100%" stop-color="#167D8D"/>
+        </linearGradient>
+      </defs>
+      <!-- Flowing Cursive Strokes for U, S, H, S, S -->
+      <g class="signature-strokes" stroke="url(#signature-grad)" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" filter="url(#pen-glow)">
+        <path id="stroke-u" class="hw-path" d="M 70 145 C 90 120, 110 115, 130 142 C 142 160, 146 198, 158 218 C 172 232, 194 232, 210 208 C 224 185, 230 140, 238 115 C 242 106, 248 108, 248 124 C 248 156, 240 196, 252 216 C 260 228, 276 226, 290 206 C 302 186, 316 166, 330 150" />
+        <path id="stroke-s1" class="hw-path" d="M 330 150 C 350 125, 365 95, 380 92 C 394 90, 400 102, 390 115 C 374 135, 348 155, 364 180 C 376 198, 410 192, 420 214 C 425 226, 410 234, 395 232 C 375 228, 370 216, 386 206 C 402 195, 424 180, 442 160" />
+        <path id="stroke-h" class="hw-path" d="M 442 160 C 462 135, 478 85, 492 56 C 504 38, 514 46, 504 70 C 488 106, 478 178, 472 226 C 472 232, 480 234, 484 222 C 490 196, 502 158, 518 138 C 532 120, 554 122, 562 144 C 568 166, 558 198, 562 222 C 566 232, 580 230, 592 208 C 604 188, 618 166, 632 150" />
+        <path id="stroke-s2" class="hw-path" d="M 632 150 C 652 125, 668 95, 682 92 C 696 90, 702 102, 692 115 C 676 135, 650 155, 666 180 C 678 198, 712 192, 722 214 C 727 226, 712 234, 697 232 C 677 228, 672 216, 688 206 C 704 195, 726 180, 744 160" />
+        <path id="stroke-s3" class="hw-path" d="M 744 160 C 764 125, 780 95, 794 92 C 808 90, 814 102, 804 115 C 788 135, 762 155, 778 180 C 790 198, 824 192, 834 214 C 839 226, 824 234, 809 232 C 789 228, 784 216, 800 206 C 822 192, 860 185, 895 190 C 925 194, 955 206, 978 200" />
+      </g>
+      <!-- Glowing Pen Tip Lead Dot -->
+      <circle id="pen-tip-dot" cx="70" cy="145" r="5" fill="#FFFFFF" filter="url(#pen-glow)" opacity="0"/>
+    </svg>
+    <button type="button" class="intro-skip-btn" id="intro-skip-btn" aria-label="Skip opening sequence">
+      <span>Skip</span> <span class="skip-key">Esc</span>
+    </button>
+  </div>
+
+  <!-- Hero Content Stage -->
+  <div class="hero-editorial-content" id="hero-content">
+    <div class="hero-eyebrow-wrap">
+      <span class="hero-eyebrow">University School of Humanities &amp; Social Sciences</span>
     </div>
+
+    <h1 class="hero-giant-title" id="hero-giant-title">
+      <span class="hero-title-line"><span class="hero-title-word">Where</span> <span class="hero-title-word">Ideas</span></span>
+      <span class="hero-title-line"><span class="hero-title-word hero-title-accent">Shape Society</span></span>
+    </h1>
+
+    <div class="hero-editorial-lower">
+      <div class="hero-desc-wrap">
+        <p class="hero-sub">A centre of academic excellence at GGSIPU, dedicated to the study of human culture, society, and thought — fostering critical minds and compassionate scholars.</p>
+        <div class="hero-actions">
+          <a href="#programmes" class="btn-gold">Explore Programmes</a>
+          <a href="#about" class="btn-outline">Learn More</a>
+        </div>
+      </div>
+
+      <div class="hero-stats-chips" aria-label="Key school facts">
+        <div class="stat-chip">
+          <span class="stat-chip-num">02</span>
+          <span class="stat-chip-lbl">Core Disciplines</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-num">MA</span>
+          <span class="stat-chip-lbl">English &amp; Economics</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-num">PhD</span>
+          <span class="stat-chip-lbl">Research Pathway</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-num">1998</span>
+          <span class="stat-chip-lbl">University Established</span>
+        </div>
+      </div>
     </div>
+
+    <a href="#cutout" class="hero-scroll-cue" aria-label="Scroll to explore">
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 10l5 5 5-5"/>
+      </svg>
+    </a>
   </div>
 </section>
 
@@ -2609,29 +2904,230 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
   /* ═══════════════════════════════════════════════════
-     1. PRELOADER
+     1. OPENING SEQUENCE & HERO VIDEO CONTROLLER
      ═══════════════════════════════════════════════════ */
-  const preloader = document.getElementById('preloader');
-  function dismissPreloader(){
-    if(!preloader) return;
-    preloader.classList.add('loaded');
-    document.documentElement.classList.add('site-loaded');
-    // Allow GSAP hero animations to start
-    setTimeout(()=>{ triggerHeroReveal(); }, 100);
+  var heroVideo = document.getElementById('hero-video');
+  if(heroVideo){
+    // Mobile / save-data bandwidth preservation
+    var conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if(conn && (conn.saveData || /2g/.test(conn.effectiveType))){
+      heroVideo.pause();
+      heroVideo.removeAttribute('autoplay');
+    }
+    // Pause video when tab is hidden to save GPU & battery
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){
+        heroVideo.pause();
+      } else if(!conn || !conn.saveData){
+        heroVideo.play().catch(function(){});
+      }
+    });
   }
 
-  if(preloader){
-    // Dismiss after bar animation finishes (~1.8s) or on click
-    preloader.addEventListener('click', dismissPreloader, {once:true});
-    if(prefersReduced){
-      // Skip preloader entirely
-      preloader.classList.add('loaded');
-      document.documentElement.classList.add('site-loaded');
-    } else {
-      setTimeout(dismissPreloader, 2000);
+  var handwriteStage = document.getElementById('handwrite-stage');
+  var heroContent = document.getElementById('hero-content');
+  var navbar = document.getElementById('navbar');
+  var skipBtn = document.getElementById('intro-skip-btn');
+
+  var hasSeenIntro = false;
+  try {
+    hasSeenIntro = sessionStorage.getItem('ushss_hero_intro_seen') === 'true';
+  } catch(e){}
+
+  // Allow forcing intro replay via URL query ?intro=1 or ?replay=1
+  if(window.location.search.indexOf('intro=1') !== -1 || window.location.search.indexOf('replay=1') !== -1){
+    hasSeenIntro = false;
+  }
+
+  function resolveHeroImmediate(){
+    if(handwriteStage) {
+      handwriteStage.style.display = 'none';
     }
+    if(navbar){
+      navbar.classList.remove('nav-intro-hidden');
+      navbar.classList.add('nav-intro-visible');
+    }
+    if(heroContent){
+      heroContent.classList.add('content-ready');
+      gsap.set('.hero-giant-title .hero-title-word', { y: 0, opacity: 1 });
+      gsap.set('.hero-eyebrow-wrap, .hero-desc-wrap, .stat-chip, .hero-scroll-cue', { y: 0, opacity: 1 });
+    }
+    document.documentElement.classList.add('site-loaded');
+  }
+
+  function runHandwriteSequence(){
+    if(typeof gsap === 'undefined' || prefersReduced){
+      resolveHeroImmediate();
+      return;
+    }
+
+    var penTip = document.getElementById('pen-tip-dot');
+    var strokeDefs = [
+      { id: 'stroke-u', duration: 0.60, delayAfter: 0.04 },
+      { id: 'stroke-s1', duration: 0.48, delayAfter: 0.04 },
+      { id: 'stroke-h', duration: 0.72, delayAfter: 0.04 },
+      { id: 'stroke-s2', duration: 0.48, delayAfter: 0.04 },
+      { id: 'stroke-s3', duration: 0.62, delayAfter: 0.35 }
+    ];
+
+    var strokeEls = [];
+    strokeDefs.forEach(function(item){
+      var el = document.getElementById(item.id);
+      if(el){
+        var len = el.getTotalLength();
+        el.style.strokeDasharray = len + ' ' + len;
+        el.style.strokeDashoffset = len;
+        strokeEls.push({ el: el, len: len, duration: item.duration, delayAfter: item.delayAfter });
+      }
+    });
+
+    if(penTip){
+      gsap.set(penTip, { opacity: 0 });
+    }
+
+    var introTl = gsap.timeline({
+      delay: 0.25,
+      onComplete: function(){
+        try { sessionStorage.setItem('ushss_hero_intro_seen', 'true'); } catch(e){}
+      }
+    });
+
+    function skipIntro(){
+      introTl.progress(1);
+      resolveHeroImmediate();
+      try { sessionStorage.setItem('ushss_hero_intro_seen', 'true'); } catch(e){}
+    }
+
+    if(skipBtn){
+      skipBtn.addEventListener('click', function(e){
+        e.stopPropagation();
+        skipIntro();
+      });
+    }
+    if(handwriteStage){
+      handwriteStage.addEventListener('click', skipIntro);
+    }
+    window.addEventListener('keydown', function(e){
+      if(e.key === 'Escape'){
+        skipIntro();
+      }
+    });
+
+    // Reveal pen tip at start of first letter
+    if(penTip && strokeEls.length > 0){
+      var startPt = strokeEls[0].el.getPointAtLength(0);
+      penTip.setAttribute('cx', startPt.x);
+      penTip.setAttribute('cy', startPt.y);
+      introTl.to(penTip, { opacity: 1, duration: 0.18, ease: 'power1.out' });
+    }
+
+    // Draw each cursive letter sequentially with natural pen cadence
+    strokeEls.forEach(function(item, idx){
+      introTl.to(item.el, {
+        strokeDashoffset: 0,
+        duration: item.duration,
+        ease: 'power2.inOut',
+        onUpdate: function(){
+          if(penTip){
+            var currentOffset = parseFloat(item.el.style.strokeDashoffset) || 0;
+            var progressLen = item.len - currentOffset;
+            if(progressLen >= 0 && progressLen <= item.len){
+              var pt = item.el.getPointAtLength(progressLen);
+              penTip.setAttribute('cx', pt.x);
+              penTip.setAttribute('cy', pt.y);
+            }
+          }
+        }
+      });
+
+      if(item.delayAfter > 0 && idx < strokeEls.length - 1){
+        introTl.to({}, { duration: item.delayAfter });
+      }
+    });
+
+    // Fade out pen tip after last stroke
+    if(penTip){
+      introTl.to(penTip, { opacity: 0, duration: 0.22, ease: 'power1.out' }, '-=0.1');
+    }
+
+    // Hold signature for ~400ms
+    introTl.to({}, { duration: 0.40 });
+
+    // ── RESOLVE: FLIP signature into navbar logo position & reveal hero content ──
+    introTl.add('resolve');
+
+    // Signature scales down & translates up-left into the navbar
+    introTl.to(handwriteStage, {
+      scale: 0.22,
+      y: '-42vh',
+      x: '-35vw',
+      opacity: 0,
+      duration: 0.85,
+      ease: 'power3.inOut',
+      onComplete: function(){
+        handwriteStage.style.display = 'none';
+      }
+    }, 'resolve');
+
+    // Floating liquid-glass navbar slides down
+    introTl.call(function(){
+      if(navbar){
+        navbar.classList.remove('nav-intro-hidden');
+        navbar.classList.add('nav-intro-visible');
+      }
+      if(heroContent){
+        heroContent.classList.add('content-ready');
+      }
+    }, null, 'resolve+=0.2');
+
+    // Headline line 1 ("WHERE IDEAS")
+    introTl.fromTo('.hero-title-line:nth-child(1) .hero-title-word',
+      { y: 70, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.88, stagger: 0.08, ease: 'power3.out' },
+      'resolve+=0.25'
+    );
+
+    // Headline line 2 ("SHAPE SOCIETY")
+    introTl.fromTo('.hero-title-line:nth-child(2) .hero-title-word',
+      { y: 70, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.88, stagger: 0.08, ease: 'power3.out' },
+      'resolve+=0.38'
+    );
+
+    // Eyebrow
+    introTl.fromTo('.hero-eyebrow-wrap',
+      { y: 20, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.7, ease: 'power2.out' },
+      'resolve+=0.3'
+    );
+
+    // Description & Buttons
+    introTl.fromTo('.hero-desc-wrap',
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, duration: 0.75, ease: 'power2.out' },
+      'resolve+=0.5'
+    );
+
+    // 4 Liquid-Glass Stats Chips (80ms staggers)
+    introTl.fromTo('.stat-chip',
+      { y: 35, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, duration: 0.65, stagger: 0.08, ease: 'power2.out' },
+      'resolve+=0.6'
+    );
+
+    // Scroll Cue Chevron
+    introTl.fromTo('.hero-scroll-cue',
+      { opacity: 0, y: -10 },
+      { opacity: 0.65, y: 0, duration: 0.6, ease: 'power2.out' },
+      'resolve+=0.85'
+    );
+  }
+
+  if(hasSeenIntro || prefersReduced){
+    resolveHeroImmediate();
   } else {
     document.documentElement.classList.add('site-loaded');
+    runHandwriteSequence();
   }
 
   /* ═══════════════════════════════════════════════════
@@ -2989,32 +3485,45 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   }
 
   /* ═══════════════════════════════════════════════════
-     5. HERO STAGGERED REVEAL
+     5. HERO VIDEO PARALLAX & BLUR SCROLL CONTROLLER
      ═══════════════════════════════════════════════════ */
-  function triggerHeroReveal(){
-    if(typeof gsap === 'undefined' || prefersReduced) return;
+  var heroSection = document.querySelector('.hero-editorial');
+  if(heroSection && typeof gsap !== 'undefined' && !prefersReduced){
+    // Parallax video slower than content
+    gsap.to('.hero-video-wrap', {
+      yPercent: 18,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: heroSection,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      }
+    });
 
-    var heroElements = [
-      '.hero .hero-eyebrow',
-      '.hero h1',
-      '.hero .hero-sub',
-      '.hero .hero-actions',
-      '.hero .hero-stats',
-      '.hero-editorial-panel'
-    ];
+    // Blur eases from 28px to 10px as user scrolls out of hero
+    gsap.to('.hero-blur-layer', {
+      backdropFilter: 'blur(10px) saturate(1.1)',
+      webkitBackdropFilter: 'blur(10px) saturate(1.1)',
+      ease: 'none',
+      scrollTrigger: {
+        trigger: heroSection,
+        start: 'top top',
+        end: 'bottom top',
+        scrub: true,
+      }
+    });
 
-    heroElements.forEach(function(sel, i){
-      var el = document.querySelector(sel);
-      if(el){
-        gsap.fromTo(el,
-          { y: 24, opacity: 0 },
-          {
-            y: 0, opacity: 1,
-            duration: 0.7,
-            delay: i * 0.1,
-            ease: 'power3.out',
-          }
-        );
+    // Soft fade of hero content as it scrolls into next section
+    gsap.to('.hero-editorial-content', {
+      yPercent: -12,
+      opacity: 0.15,
+      ease: 'none',
+      scrollTrigger: {
+        trigger: heroSection,
+        start: 'center top',
+        end: 'bottom top',
+        scrub: true,
       }
     });
   }
