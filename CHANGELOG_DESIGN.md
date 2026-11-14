@@ -10,22 +10,21 @@ Transform the USHSS homepage from a static institutional site into an Awwwards-c
 ### Changes Applied
 
 #### 🎨 Design Tokens (CSS Custom Properties)
-| Token | Before | After (Awwwards SOTD Tier) | Purpose / Aesthetic Inspiration |
-|-------|--------|----------------------------|---------------------------------|
-| `--maroon` | `#881818` | `#58111A` (Imperial Velvet Bordeaux) | Eliminates tomato-red harshness; delivers Cartier/luxury heritage depth |
-| `--maroon-deep` | `#4A0D0D` | `#24060B` (Noir Bordeaux) | High-contrast grounding for dark sections and deep ambient shadows |
-| `--maroon-rich` | — | `#420C13` (Vintage Port) | Midtone gradient bridge for editorial panels and cards |
-| `--maroon-light` | `#A82828` | `#7A1926` (Ruby Wine) | Warm specular edge sheen and button hover highlight |
-| `--gold` | `#C9A84C` | `#C5A574` (Brushed Champagne Gilt) | Replaces mustard curry yellow with subtle antique metallic lustre |
-| `--gold-light` | `#E8D5A0` | `#F4ECDC` (Champagne Silk) | Crisp text contrast on deep bordeaux surfaces |
-| `--gold-deep` | `#8B6914` | `#8E6E43` (Antique Bronze) | Elegant subdued kicker labels on light backgrounds |
-| `--gold-glow` | — | `rgba(197, 165, 116, 0.28)` | Specular ambient glow for liquid glass cards and borders |
-| `--cream` | `#FAF7F2` | `#FAF8F5` (Museum Alabaster) | High-end editorial canvas replacing dull paper beige |
-| `--cream-dark` | `#F0E8DA` | `#F1EDE6` (Cashmere Silk) | Balanced secondary surface tone |
-| `--border` | `#DECDB2` | `#E5DEC9` (Muted Bone Gilt) | Crisp, subtle surface separation |
-| `--ink` | `#1A1410` | `#161213` (Obsidian Charcoal) | Modern high-readability typography base |
-| `--ink-mid` | `#362316` | `#383031` (Deep Espresso) | Secondary body typography |
-| `--ink-muted` | `#6B5D50` | `#6B6162` (Warm Slate) | Metadata, dates, and captions |
+| Token | Value | Name & Role |
+|-------|-------|-------------|
+| `--maroon-deep` / `--ink` | `#071B2B` (`rgb(7, 27, 43)`) | **Midnight Oceanic Navy**: Grounding dark sections (Programmes, Events, Footer), base typography, and ambient depth |
+| `--maroon` | `#167D8D` (`rgb(22, 125, 141)`) | **Deep Aegean Teal**: Primary brand identity, hero emphasis, CTA buttons, active states, and seal monogram |
+| `--maroon-rich` | `#0E4E58` | **Deep Teal Abyss**: Gradient bridge for 3D showcase cards |
+| `--maroon-light` | `#1FA2B6` | **Vivid Cyan Sheen**: Button hover highlights and specular rim lights |
+| `--gold` | `#B9E4E8` (`rgb(185, 228, 232)`) | **Powder Ice Cyan**: Luminous highlight, diamond glyphs, pill badges, and floating capsule border glow |
+| `--gold-light` | `#EBF8F9` | **Crisp Ice Shimmer**: High-contrast text on dark navy surfaces |
+| `--gold-deep` | `#0E5B67` | **Slate Teal**: High-contrast kickers and category labels on light surfaces |
+| `--gold-glow` | `rgba(185, 228, 232, 0.35)` | **Ice Aura**: Specular liquid-glass glow |
+| `--cream` | `#F6F8F8` | **Studio Porcelain Canvas**: Clean, airy background |
+| `--cream-dark` | `#EEEEEE` (`rgb(238, 238, 238)`) | **Studio Light Grey**: Secondary card and section backgrounds |
+| `--white` | `#FFFFFF` | **Pure White**: Primary card faces and pill buttons |
+| `--border` | `#D4E3E5` | **Soft Ice Slate**: Hairline surface dividers |
+| `--shadow-glass` | `0 12px 40px rgba(7, 27, 43, 0.10)` | Midnight navy ambient glass shadow |
 | Motion tokens | — | `--ease-out`, `--ease-in-out`, `--ease-spring`, `--ease-smooth` |
 | Duration tokens | — | `--dur-fast` (200ms), `--dur-normal` (400ms), `--dur-slow` (700ms), `--dur-dramatic` (1200ms) |
 | Shadow tokens | — | `--shadow-sm`, `--shadow-md`, `--shadow-lg`, `--shadow-glass` |
