@@ -53,6 +53,23 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Mrs+Saint+Delafield&display=swap"/>
 <style>
 @font-face {
+  font-family: 'Amsterdam Signature';
+  src: url('/static/fonts/Amsterdam%20Signature.woff2') format('woff2'),
+       url('/static/fonts/Amsterdam%20Signature.woff') format('woff'),
+       url('/static/fonts/Amsterdam%20Signature.ttf') format('truetype'),
+       url('/static/fonts/Amsterdam%20Signature.otf') format('opentype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Johnathan';
+  src: url('/static/fonts/JonathanSignature.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   font-family: 'Gravity Signature';
   src: url('/static/fonts/GravitySignature.woff2') format('woff2'),
        url('/static/fonts/GravitySignature.ttf') format('truetype'),
@@ -65,7 +82,8 @@
 :root{
   /* ── HERO TUNING & TYPOGRAPHY SYSTEM TOKENS ── */
   --hero-blur: 7px;
-  --font-signature: 'Gravity Signature', 'Mrs Saint Delafield', cursive;
+  --page-gutter: 42px;
+  --font-signature: "Amsterdam Signature", "Johnathan", "Mrs Saint Delafield", cursive;
   --font-hero: "Times New Roman", Times, "Liberation Serif", serif;
 
   /* ── STRICT 5-COLOUR SOURCE OF TRUTH (Physical Dye-in-Water Model) ── */
@@ -153,11 +171,12 @@ html.lenis,html.lenis body{height:auto}
 nav{
   position:fixed;
   top:18px;
-  left:50%;
-  transform:translateX(-50%);
-  width:min(1220px, calc(100% - 3rem));
+  left:var(--page-gutter, 42px);
+  right:var(--page-gutter, 42px);
+  max-width:1440px;
+  margin:0 auto;
   height:62px;
-  padding:0 1.25rem 0 1rem;
+  padding:0 1.25rem 0 0;
   z-index:100;
   display:flex;
   align-items:center;
@@ -168,7 +187,7 @@ nav{
   -webkit-backdrop-filter:blur(28px) saturate(180%);
   border:1px solid rgba(211,217,212,0.22);
   box-shadow:0 16px 40px rgba(33,42,49,0.50),0 2px 6px rgba(0,0,0,0.18),inset 0 1.5px 1px rgba(211,217,212,0.45),inset 0 -1px 1px rgba(78,174,192,0.28);
-  transition:top var(--dur-normal) var(--ease-out),width var(--dur-normal) var(--ease-out),height var(--dur-normal) var(--ease-out),box-shadow var(--dur-normal) var(--ease-out),background var(--dur-normal) var(--ease-out),border-color var(--dur-normal) var(--ease-out),transform var(--dur-normal) var(--ease-out);
+  transition:top var(--dur-normal) var(--ease-out),height var(--dur-normal) var(--ease-out),box-shadow var(--dur-normal) var(--ease-out),background var(--dur-normal) var(--ease-out),border-color var(--dur-normal) var(--ease-out);
 }
 nav::before{
   content:'';position:absolute;inset:0;pointer-events:none;border-radius:9999px;
@@ -177,7 +196,6 @@ nav::before{
 }
 nav.scrolled{
   top:12px;
-  width:min(1160px, calc(100% - 2rem));
   height:58px;
   background:rgba(33,42,49,0.88);
   border-color:rgba(78,174,192,0.38);
@@ -469,15 +487,15 @@ nav.scrolled{
   will-change: filter, backdrop-filter;
 }
 
-/* Layer 2: Duotone Dye Overlay, Soft Scrim & Bottom Vignette */
+/* Layer 2: Duotone Dye Overlay, Left Soft Scrim & Bottom Vignette */
 .hero-tint-overlay {
   position: absolute;
   inset: 0;
   z-index: 3;
   pointer-events: none;
   background:
-    radial-gradient(circle at 45% 42%, rgba(18, 78, 102, 0.06) 0%, rgba(33, 42, 49, 0.22) 55%, rgba(33, 42, 49, 0.55) 85%, #212A31 100%),
-    linear-gradient(to right, transparent 0%, transparent 40%, rgba(33, 42, 49, 0.35) 65%, rgba(33, 42, 49, 0.62) 100%),
+    radial-gradient(circle at 55% 42%, rgba(18, 78, 102, 0.06) 0%, rgba(33, 42, 49, 0.22) 55%, rgba(33, 42, 49, 0.55) 85%, #212A31 100%),
+    linear-gradient(to right, rgba(33, 42, 49, 0.65) 0%, rgba(33, 42, 49, 0.55) var(--page-gutter, 42px), rgba(33, 42, 49, 0.35) 36%, transparent 60%),
     linear-gradient(to bottom, rgba(33, 42, 49, 0.35) 0%, transparent 30%, rgba(33, 42, 49, 0.40) 70%, #212A31 100%);
 }
 
@@ -500,40 +518,40 @@ nav.scrolled{
   max-width: 1440px;
   height: 100%;
   margin: 0 auto;
-  padding: clamp(5.2rem, 10.5vh, 7.2rem) clamp(1.5rem, 4vw, 4rem) clamp(1.2rem, 2.8vh, 2.4rem);
+  padding: clamp(5.2rem, 10.5vh, 7.2rem) var(--page-gutter, 42px) clamp(1.2rem, 2.8vh, 2.4rem);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
 }
 
-/* Content Area: Right-Aligned Column holding Signature + Content */
+/* Content Area: Left-Aligned Column holding Signature + Content */
 .hero-content-area {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   flex: 1;
   width: 100%;
   min-height: 0;
 }
 
-/* Right Content Column: width min(560px, 46vw), aligned with nav CONTACT button margin, text left-aligned */
-.hero-right-col {
+/* Left Content Column: width min(620px, 52vw), aligned with nav logo, text left-aligned */
+.hero-left-col {
   position: relative;
   z-index: 2;
-  width: min(560px, 46vw);
+  width: min(620px, 52vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
 }
 
-/* Handwritten Centerline Signature (All-Caps USHSS) */
+/* Handwritten Signature in Amsterdam Signature (All-Caps USHSS) */
 .hero-signature-wrap {
   width: 100%;
-  max-width: clamp(140px, 22vw, 360px);
+  max-width: clamp(200px, 26vw, 420px);
   height: auto;
-  aspect-ratio: 430 / 150;
+  aspect-ratio: 520 / 160;
   margin-bottom: clamp(0.5rem, 1.2vh, 1rem);
   display: flex;
   align-items: center;
@@ -545,21 +563,11 @@ nav.scrolled{
   height: 100%;
   overflow: visible;
 }
-.sig-stroke {
-  fill: none;
-  stroke: var(--mist-200);
-  stroke-width: 5.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.sig-letter {
+  font-family: var(--font-signature);
+  font-size: 110px;
+  fill: var(--mist-200);
   filter: drop-shadow(0 0 10px rgba(78, 174, 192, 0.55));
-}
-.sig-stroke-in {
-  fill: none;
-  stroke: #FFFFFF;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  opacity: 0.9;
 }
 #pen-tip {
   pointer-events: none;
@@ -630,52 +638,61 @@ nav.scrolled{
   color: var(--mist-200);
   opacity: 0.95;
   margin: 0;
-  max-width: 520px;
+  max-width: 540px;
   text-shadow: 0 1px 12px rgba(33, 42, 49, 0.7);
 }
 
-/* Action Buttons */
+/* Action Buttons (52px tall, equal padding, 16px gap, left aligned) */
 .hero-actions {
   display: flex;
-  gap: 1rem;
+  gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
 }
 .hero-actions .btn-gold,
 .hero-actions .btn-outline {
   font-family: var(--font-hero);
-  font-size: 14.5px;
+  font-size: 15px;
   letter-spacing: 0.4px;
+  height: 52px;
+  padding: 0 28px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
 }
 
 /* Bottom Bar: Stats Row & Scroll Cue */
 .hero-bottom-bar {
   width: 100%;
   display: flex;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: 2rem;
-  margin-top: auto;
-  padding-top: 1rem;
+  align-items: center;
+  justify-content: flex-start;
   position: relative;
   z-index: 2;
+  margin-top: 40px;
+  margin-bottom: 32px;
 }
 .hero-stats-wrap {
-  flex: 1;
-  max-width: 980px;
+  flex: none;
 }
 .hero-stats-chips {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: clamp(0.75rem, 1.2vw, 1.25rem);
-  width: 100%;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16px;
 }
 .stat-chip {
+  width: 210px;
+  height: 80px;
+  box-sizing: border-box;
+  padding: 16px 20px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  padding: clamp(11px, 1.4vh, 15px) clamp(13px, 1.2vw, 18px);
-  border-radius: 14px;
+  align-items: flex-start;
   background: rgba(211, 217, 212, 0.07);
   border: 1px solid rgba(211, 217, 212, 0.20);
   backdrop-filter: blur(20px) saturate(140%);
@@ -691,7 +708,7 @@ nav.scrolled{
 }
 .stat-chip-num {
   font-family: var(--font-hero);
-  font-size: clamp(1.4rem, 1.8vw, 1.85rem);
+  font-size: 28px;
   font-weight: 700;
   color: var(--mist-200);
   line-height: 1.1;
@@ -699,17 +716,22 @@ nav.scrolled{
 }
 .stat-chip-lbl {
   font-family: var(--font-hero);
-  font-size: 11px;
+  font-size: 11.5px;
   font-weight: 400;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.4px;
   text-transform: uppercase;
   color: var(--mist-200);
-  opacity: 0.82;
-  margin-top: 4px;
+  opacity: 0.84;
+  margin-top: 3px;
+  white-space: nowrap;
 }
 
-/* Centered Bobbing Scroll Indicator Chevron */
+/* Centered Bobbing Scroll Indicator Chevron at the bottom */
 .hero-scroll-cue {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -733,7 +755,21 @@ nav.scrolled{
 }
 
 /* Responsive adjustments */
+@media (max-width: 1100px) {
+  :root {
+    --page-gutter: 32px;
+  }
+  .hero-stats-chips {
+    display: grid;
+    grid-template-columns: repeat(2, 210px);
+    gap: 12px;
+  }
+}
+
 @media (max-width: 900px) {
+  :root {
+    --page-gutter: 20px;
+  }
   .hero-editorial {
     min-height: 100svh;
     height: auto;
@@ -742,7 +778,7 @@ nav.scrolled{
   .hero-stage-container {
     height: auto;
     min-height: 100svh;
-    padding: 5rem 1.25rem 1.5rem;
+    padding: 5rem var(--page-gutter, 20px) 1.5rem;
     gap: 1.5rem;
   }
   .hero-tint-overlay {
@@ -754,12 +790,12 @@ nav.scrolled{
     justify-content: flex-start;
     flex: none;
   }
-  .hero-right-col {
+  .hero-left-col {
     width: 100%;
     max-width: 100%;
   }
   .hero-signature-wrap {
-    max-width: 80%;
+    max-width: min(340px, 90%);
     margin-bottom: 0.6rem;
   }
   .hero-tagline {
@@ -778,18 +814,38 @@ nav.scrolled{
     margin-bottom: 1rem;
   }
   .hero-bottom-bar {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.8rem;
-    padding-top: 0;
-    margin-top: 0;
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
   }
   .hero-stats-chips {
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.65rem;
+    width: 100%;
   }
   .stat-chip {
-    padding: 8px 12px;
+    width: 100%;
+    height: auto;
+    min-height: 70px;
+    padding: 12px 14px;
+  }
+  .stat-chip-num {
+    font-size: 1.4rem;
+  }
+  .stat-chip-lbl {
+    font-size: 10px;
+  }
+  .hero-scroll-cue {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-stats-chips {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .stat-chip {
+    min-height: 64px;
+    padding: 10px 12px;
   }
   .stat-chip-num {
     font-size: 1.25rem;
@@ -797,16 +853,19 @@ nav.scrolled{
   .stat-chip-lbl {
     font-size: 9px;
   }
-  .hero-scroll-cue {
-    display: none;
-  }
-}
-@media (max-width: 480px) {
-  .hero-stage-container {
-    padding: 4.5rem 1rem 1rem;
-  }
   .hero-tagline {
     font-size: clamp(1.7rem, 7.6vw, 2.1rem);
+  }
+}
+
+@media (max-width: 420px) {
+  .hero-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .hero-actions .btn-gold,
+  .hero-actions .btn-outline {
+    width: 100%;
   }
 }
 
@@ -1272,16 +1331,18 @@ section[id] { scroll-margin-top: 88px; }
 @media (max-width: 900px) {
   nav {
     top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: calc(100% - 1.5rem);
+    left: var(--page-gutter, 20px);
+    right: var(--page-gutter, 20px);
+    width: auto;
     height: 56px;
-    padding: 0 0.85rem;
+    padding: 0 0.85rem 0 0;
     border-radius: 9999px;
   }
   nav.scrolled {
     top: 8px;
-    width: calc(100% - 1rem);
+    left: var(--page-gutter, 20px);
+    right: var(--page-gutter, 20px);
+    width: auto;
     height: 54px;
   }
   .nav-brand { gap: 0.65rem; min-width: 0; }
@@ -1864,36 +1925,38 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
   <div class="hero-stage-container">
     <h1 class="sr-only">University School of Humanities &amp; Social Sciences (USHSS) — GGSIPU</h1>
 
-    <!-- Right-Aligned Content Area -->
+    <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
-      <div class="hero-right-col">
-        <!-- Handwritten Signature (Sequential Centerline Strokes in All Caps USHSS) -->
+      <div class="hero-left-col">
+        <!-- Handwritten Signature in Amsterdam Signature (All-Caps USHSS) -->
         <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
-          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 430 150" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <g id="sig-group" transform="skewX(-6)">
-              <!-- Primary Outer Stroke (mist-200 with soft teal-300 glow) -->
-              <g class="sig-outer">
-                <path id="strk-u" class="sig-stroke" d="M 30 24 C 27 64 24 104 38 120 C 52 134 78 126 86 96 C 90 74 92 46 94 24" />
-                <path id="strk-s1" class="sig-stroke" d="M 166 38 C 158 20 126 18 120 42 C 114 62 168 74 166 100 C 164 126 128 128 118 108" />
-                <path id="strk-h1" class="sig-stroke" d="M 196 24 L 190 124" />
-                <path id="strk-h2" class="sig-stroke" d="M 264 22 L 258 124" />
-                <path id="strk-h3" class="sig-stroke" d="M 192 74 C 216 71 240 73 260 73" />
-                <path id="strk-s2" class="sig-stroke" d="M 334 38 C 326 20 294 18 288 42 C 282 62 336 74 334 100 C 332 126 296 128 286 108" />
-                <path id="strk-s3" class="sig-stroke" d="M 406 38 C 398 20 366 18 360 42 C 354 62 408 74 406 100 C 404 126 368 128 358 108" />
-              </g>
-              <!-- Faint Second Pass (Pen Pressure Effect) -->
-              <g class="sig-inner">
-                <path id="in-u" class="sig-stroke-in" d="M 30 24 C 27 64 24 104 38 120 C 52 134 78 126 86 96 C 90 74 92 46 94 24" />
-                <path id="in-s1" class="sig-stroke-in" d="M 166 38 C 158 20 126 18 120 42 C 114 62 168 74 166 100 C 164 126 128 128 118 108" />
-                <path id="in-h1" class="sig-stroke-in" d="M 196 24 L 190 124" />
-                <path id="in-h2" class="sig-stroke-in" d="M 264 22 L 258 124" />
-                <path id="in-h3" class="sig-stroke-in" d="M 192 74 C 216 71 240 73 260 73" />
-                <path id="in-s2" class="sig-stroke-in" d="M 334 38 C 326 20 294 18 288 42 C 282 62 336 74 334 100 C 332 126 296 128 286 108" />
-                <path id="in-s3" class="sig-stroke-in" d="M 406 38 C 398 20 366 18 360 42 C 354 62 408 74 406 100 C 404 126 368 128 358 108" />
-              </g>
-              <!-- Glowing Pen Tip Lead Dot -->
-              <circle id="pen-tip" cx="30" cy="24" r="5" fill="#FFFFFF" opacity="0"/>
-            </g>
+          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 520 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <clipPath id="clip-u">
+                <rect id="rect-u" x="15" y="0" width="0" height="160" />
+              </clipPath>
+              <clipPath id="clip-s1">
+                <rect id="rect-s1" x="115" y="0" width="0" height="160" />
+              </clipPath>
+              <clipPath id="clip-h">
+                <rect id="rect-h" x="200" y="0" width="0" height="160" />
+              </clipPath>
+              <clipPath id="clip-s2">
+                <rect id="rect-s2" x="310" y="0" width="0" height="160" />
+              </clipPath>
+              <clipPath id="clip-s3">
+                <rect id="rect-s3" x="395" y="0" width="0" height="160" />
+              </clipPath>
+            </defs>
+
+            <text id="letter-u" class="sig-letter" x="20" y="115" clip-path="url(#clip-u)">U</text>
+            <text id="letter-s1" class="sig-letter" x="120" y="115" clip-path="url(#clip-s1)">S</text>
+            <text id="letter-h" class="sig-letter" x="205" y="115" clip-path="url(#clip-h)">H</text>
+            <text id="letter-s2" class="sig-letter" x="315" y="115" clip-path="url(#clip-s2)">S</text>
+            <text id="letter-s3" class="sig-letter" x="400" y="115" clip-path="url(#clip-s3)">S</text>
+
+            <!-- Glowing Pen Tip Lead Dot -->
+            <circle id="pen-tip" cx="20" cy="75" r="5" fill="#FFFFFF" opacity="0"/>
           </svg>
         </div>
 
@@ -2984,74 +3047,61 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     var penTip = document.getElementById('pen-tip');
 
-    var strokes = [
-      { id: 'strk-u', inId: 'in-u', dur: 0.26, gap: 0.04 },
-      { id: 'strk-s1', inId: 'in-s1', dur: 0.23, gap: 0.04 },
-      { id: 'strk-h1', inId: 'in-h1', dur: 0.14, gap: 0.03 },
-      { id: 'strk-h2', inId: 'in-h2', dur: 0.14, gap: 0.03 },
-      { id: 'strk-h3', inId: 'in-h3', dur: 0.13, gap: 0.04 },
-      { id: 'strk-s2', inId: 'in-s2', dur: 0.23, gap: 0.04 },
-      { id: 'strk-s3', inId: 'in-s3', dur: 0.23, gap: 0.0 }
+    var letterDefs = [
+      { id: 'rect-u', maxW: 100, dur: 0.25, startX: 20, endX: 115, y: 75, gap: 0.04 },
+      { id: 'rect-s1', maxW: 88, dur: 0.25, startX: 120, endX: 205, y: 75, gap: 0.04 },
+      { id: 'rect-h', maxW: 110, dur: 0.25, startX: 205, endX: 315, y: 75, gap: 0.04 },
+      { id: 'rect-s2', maxW: 88, dur: 0.25, startX: 315, endX: 400, y: 75, gap: 0.04 },
+      { id: 'rect-s3', maxW: 95, dur: 0.25, startX: 400, endX: 495, y: 75, gap: 0.0 }
     ];
 
-    var strokeData = [];
-    strokes.forEach(function(s){
-      var el = document.getElementById(s.id);
-      var inEl = document.getElementById(s.inId);
-      if(el && inEl){
-        var len = el.getTotalLength ? el.getTotalLength() : 150;
-        el.style.strokeDasharray = len + ' ' + len;
-        el.style.strokeDashoffset = len;
-        inEl.style.strokeDasharray = len + ' ' + len;
-        inEl.style.strokeDashoffset = len;
-        var startPt = el.getPointAtLength ? el.getPointAtLength(0) : { x: 30, y: 24 };
-        strokeData.push({ el: el, inEl: inEl, len: len, dur: s.dur, gap: s.gap, startPt: startPt });
-      }
-    });
-
     if(prefersReduced || typeof gsap === 'undefined'){
-      strokeData.forEach(function(s){
-        s.el.style.strokeDashoffset = 0;
-        s.inEl.style.strokeDashoffset = 0;
+      letterDefs.forEach(function(l){
+        var el = document.getElementById(l.id);
+        if(el) el.setAttribute('width', l.maxW);
       });
       if(penTip) penTip.style.display = 'none';
       gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
       return;
     }
 
-    // Master Hero Timeline (starts ~0.15s after interactive)
-    var heroTl = gsap.timeline({
-      delay: 0.15,
-      defaults: { ease: 'power2.inOut' }
+    // Reset clip rects
+    letterDefs.forEach(function(l){
+      var el = document.getElementById(l.id);
+      if(el) el.setAttribute('width', '0');
     });
 
-    // Sequential Stroke by Stroke Handwriting
-    strokeData.forEach(function(s, idx){
-      heroTl.set(penTip, { attr: { cx: s.startPt.x, cy: s.startPt.y } });
+    // Master Hero Timeline (starts ~0.2s after interactive)
+    var heroTl = gsap.timeline({
+      delay: 0.2,
+      defaults: { ease: 'power2.out' }
+    });
+
+    // Sequential reveal: letter N never starts until letter N-1 has fully finished (with 40ms pen lift gap)
+    letterDefs.forEach(function(l, idx){
+      heroTl.set(penTip, { attr: { cx: l.startX, cy: l.y } });
       if(idx === 0){
-        heroTl.to(penTip, { opacity: 1, duration: 0.06, ease: 'power1.out' });
+        heroTl.to(penTip, { opacity: 1, duration: 0.05, ease: 'power1.out' });
       }
 
-      heroTl.to(s.el, {
-        strokeDashoffset: 0,
-        duration: s.dur,
-        ease: 'power2.inOut',
-        onUpdate: function(){
-          var curOff = parseFloat(s.el.style.strokeDashoffset) || 0;
-          s.inEl.style.strokeDashoffset = curOff;
-          var progLen = s.len - curOff;
-          if(penTip && s.el.getPointAtLength && progLen >= 0 && progLen <= s.len){
-            var pt = s.el.getPointAtLength(progLen);
-            penTip.setAttribute('cx', pt.x);
-            penTip.setAttribute('cy', pt.y);
-          }
-        }
-      });
+      var el = document.getElementById(l.id);
+      if(el){
+        heroTl.to(el, {
+          attr: { width: l.maxW },
+          duration: l.dur,
+          ease: 'power2.out'
+        });
+        heroTl.to(penTip, {
+          attr: { cx: l.endX },
+          duration: l.dur,
+          ease: 'power2.out'
+        }, "<");
+      }
 
-      if(s.gap > 0){
+      if(l.gap > 0){
         // Natural pen lift gap
-        heroTl.to(penTip, { opacity: 0.2, duration: s.gap * 0.4, ease: 'power1.in' });
-        heroTl.to(penTip, { opacity: 1, duration: s.gap * 0.6, ease: 'power1.out' });
+        heroTl.to(penTip, { opacity: 0.2, duration: l.gap * 0.5, ease: 'power1.in' });
+        heroTl.to(penTip, { opacity: 1, duration: l.gap * 0.5, ease: 'power1.out' });
       }
     });
 
@@ -3060,8 +3110,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       heroTl.to(penTip, { opacity: 0, duration: 0.15, ease: 'power1.out' });
     }
 
-    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.5s)
-    // 80-100ms apart, 500ms ease-out
+    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.4s)
     heroTl.fromTo('.hero-stagger-item',
       { opacity: 0, y: 18 },
       {
@@ -3084,14 +3133,10 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         if(!isNaN(tVal)){
           heroTl.seek(tVal);
           heroTl.pause();
-          // Synchronize strokeDashoffset for both passes on seek
-          strokeData.forEach(function(s){
-            s.inEl.style.strokeDashoffset = s.el.style.strokeDashoffset;
-          });
           if(tVal >= 2.0){
-            strokeData.forEach(function(s){
-              s.el.style.strokeDashoffset = 0;
-              s.inEl.style.strokeDashoffset = 0;
+            letterDefs.forEach(function(l){
+              var el = document.getElementById(l.id);
+              if(el) el.setAttribute('width', l.maxW);
             });
             if(penTip) penTip.setAttribute('opacity', '0');
             gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
@@ -3565,6 +3610,5 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
 })();
 </script>
-</body>
-</html>
 
+</body></html>
