@@ -59,19 +59,17 @@ Every interactive or container object behaves as an optical lens immersed in wat
 
 ---
 
-## 4. Colour-in-Water Fluid Dye Layer
+## 4. Atmospheric Deep Water Background & Atmosphere
 
-1. **WebGL Canvas Shader (`#dye-canvas`)**:
-   - Domain-warped simplex and curl noise generating slow, buoyant fluid dye billows.
-   - Concentrated dye plumes (`--teal-700` `#124E66`) dilute through slate clouds (`--slate-400` `#748D92`) into clear water highlights (`--mist-200` `#D3D9D4`) over the midnight abyss (`--ink-900` `#212A31`).
-2. **Interactive Fluid Dynamics**:
-   - **Pointer Stirring**: Moving the mouse induces rotational velocity into the fluid, causing dye clouds to part and trail the cursor.
-   - **Click Droplet Bloom**: Clicking drops a concentrated dollop of dye that expands outward in circular vortex rings and diffuses over 1.8 seconds.
-   - **Scroll Currents**: Page scrolling shifts the vertical fluid drift proportionally to scroll speed.
-3. **Performance & Calibrated Fallback**:
-   - Rendering throttled when offscreen or hidden (`requestAnimationFrame` pause).
-   - Canvas resolution capped at DPR 1.25 with 1/2 viewport scale for 60fps performance.
-   - Fully disabled when `prefers-reduced-motion: reduce`, displaying a peaceful static duotone gradient.
+Per user feedback to eliminate busy or turbulent water ripples ("i don't want this water kinda thing flowing behind this"), the turbulent WebGL ripple layer was replaced with a serene, ultra-clean layered atmospheric gradient:
+1. **Atmospheric Dye-in-Water Gradient**:
+   - `radial-gradient(ellipse at 78% 28%, rgba(18, 78, 102, 0.32), transparent 50%)` (concentrated teal dye drop)
+   - `radial-gradient(ellipse at 15% 75%, rgba(46, 57, 68, 0.45), transparent 55%)` (mid-depth water body)
+   - `linear-gradient(145deg, #1A2228 0%, #212A31 55%, #182026 100%)` (midnight deep water abyss)
+2. **Advantages**:
+   - Zero moiré or noisy ripple interference behind editorial typography.
+   - 60fps native GPU compositor rendering with 0 CPU overhead.
+   - Clean, dark backdrop providing maximum optical contrast for the liquid glass containers, specular meniscus highlights, and luminous `--teal-300` accents.
 
 ---
 
