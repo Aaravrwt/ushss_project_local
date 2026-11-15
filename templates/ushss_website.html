@@ -438,10 +438,9 @@ nav.scrolled{
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
 
 /* noscript / no-js: show everything immediately */
-.no-js .hero-stagger-item { visibility: visible !important; transform: none !important; }
-.no-js .hero-signature-wrap { visibility: visible !important; }
-.no-js .sig-letter-group { visibility: visible !important; }
-.no-js .mask-stroke { stroke-dashoffset: -0.02 !important; visibility: visible !important; }
+.no-js .hero-stagger-item { opacity: 1 !important; transform: none !important; }
+.no-js #hero-particle-canvas { display: none !important; }
+.no-js .hero-fallback-title { display: block !important; }
 .no-js #pen-tip { display: none !important; }
 
 .btn-gold, .btn-outline { transition: color .25s, background-color .25s, border-color .25s, transform .25s, box-shadow .25s; }
@@ -449,10 +448,9 @@ nav.scrolled{
 .value-card, .prog-card, .faculty-card { will-change: transform; }
 @media (prefers-reduced-motion: reduce) {
   /* Show finished state immediately — no animation */
-  .hero-signature-wrap { visibility: visible !important; }
-  .hero-stagger-item { visibility: visible !important; transform: none !important; }
-  .sig-letter-group { visibility: visible !important; }
-  .mask-stroke { stroke-dashoffset: -0.02 !important; visibility: visible !important; }
+  .hero-stagger-item { opacity: 1 !important; transform: none !important; }
+  #hero-particle-canvas { display: none !important; }
+  .hero-fallback-title { display: block !important; }
   #pen-tip { display: none !important; }
   .hero-video { animation: none !important; }
   .btn-gold, .btn-outline { transition: none !important; }
@@ -514,7 +512,7 @@ nav.scrolled{
   pointer-events: none;
   background:
     radial-gradient(circle at 55% 42%, rgba(18, 78, 102, 0.06) 0%, rgba(33, 42, 49, 0.22) 55%, rgba(33, 42, 49, 0.55) 85%, #212A31 100%),
-    linear-gradient(to right, rgba(33, 42, 49, 0.65) 0%, rgba(33, 42, 49, 0.55) var(--page-gutter, 42px), rgba(33, 42, 49, 0.35) 36%, transparent 60%),
+    linear-gradient(to right, rgba(33, 42, 49, 0.35) 0%, rgba(33, 42, 49, 0.30) var(--page-gutter, 42px), rgba(33, 42, 49, 0.15) 36%, transparent 60%),
     linear-gradient(to bottom, rgba(33, 42, 49, 0.35) 0%, transparent 30%, rgba(33, 42, 49, 0.40) 70%, #212A31 100%);
 }
 
@@ -565,75 +563,48 @@ nav.scrolled{
   text-align: left;
 }
 
-/* Handwritten Signature in Serendipity (All-Caps USHSS with Centerline Mask Reveal) */
-.hero-signature-wrap {
-  width: 100%;
-  /* Reserve space up front - no layout shift when font loads */
-  max-width: min(820px, 58vw);
-  height: auto;
-  /* viewBox is 834x220, so aspect-ratio = 834/220 */
-  aspect-ratio: 834 / 220;
-  margin-bottom: clamp(0.6rem, 1.4vh, 1.2rem);
-  display: block;
-  overflow: visible;
-  position: relative;
-  /* Hidden before JS runs — visibility:hidden reserves space but paints nothing */
-  visibility: hidden;
-}
-.hero-signature-svg {
+/* Hero Particle Canvas: layer over video (z-index: 5), behind text (hero-stage-container z-index: 10) */
+#hero-particle-canvas {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
-  overflow: visible;
+  z-index: 5;
+  pointer-events: none;
   display: block;
 }
 
-/* Each per-letter group: hidden until its turn */
-.sig-letter-group {
-  visibility: hidden;
+.hero-particle-wrap {
+  width: 100%;
+  max-width: min(820px, 58vw);
+  height: clamp(140px, 20vh, 220px);
+  margin-bottom: clamp(0.6rem, 1.4vh, 1.2rem);
+  position: relative;
+  display: block;
 }
 
-/* The actual text glyphs inside each group */
-.sig-letter {
+.hero-fallback-title {
+  display: none;
   font-family: var(--font-signature);
-  font-size: 200px;
-  fill: var(--mist-200);
-  /* Uniform letter-spacing — rendered as individual <text> at computed x positions */
-  filter: drop-shadow(0 0 12px rgba(78, 174, 192, 0.5)) drop-shadow(0 2px 8px rgba(33, 42, 49, 0.7));
-}
-
-/* Mask centerline strokes — BUTT caps to prevent dot-at-zero artifact */
-.mask-stroke {
-  fill: none;
-  stroke: #ffffff;
-  stroke-width: 68;
-  stroke-linecap: butt;
-  stroke-linejoin: round;
-}
-
-/* Debug centerline overlay */
-.debug-centerline {
-  fill: none;
-  stroke: rgba(255, 60, 60, 0.85);
-  stroke-width: 3;
-  stroke-linecap: round;
-  pointer-events: none;
-}
-
-/* noscript / reduced-motion: show everything immediately */
-.no-js .hero-signature-wrap,
-.no-js .sig-letter-group {
-  visibility: visible !important;
-}
-.no-js .mask-stroke {
-  stroke-dashoffset: -0.02 !important;
-  visibility: visible !important;
+  font-size: clamp(60px, 12vw, 150px);
+  color: var(--mist-200);
+  line-height: 1;
+  letter-spacing: 0.04em;
+  margin: 0;
+  user-select: none;
+  filter: drop-shadow(0 0 12px rgba(78, 174, 192, 0.5));
 }
 
 .hero-stagger-item {
-  /* visibility:hidden reserves space and paints nothing — better than opacity:0 for no-flash */
-  visibility: hidden;
-  transform: translate3d(0, 24px, 0);
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.7s ease-out, transform 0.7s ease-out;
   will-change: transform, opacity;
+}
+
+.hero-stagger-item.revealed {
+  opacity: 1;
+  transform: translateY(0);
 }
 
 /* Eyebrow Kicker */
@@ -852,8 +823,9 @@ nav.scrolled{
     width: 100%;
     max-width: 100%;
   }
-  .hero-signature-wrap {
+  .hero-particle-wrap {
     max-width: min(380px, 95vw);
+    height: clamp(100px, 16vh, 160px);
     margin-bottom: 0.8rem;
   }
   .hero-tagline {
@@ -1978,6 +1950,8 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <div class="hero-blur-layer"></div>
     <div class="hero-tint-overlay"></div>
     <div class="hero-grain-layer"></div>
+    <!-- Interactive Word Particle Canvas -->
+    <canvas id="hero-particle-canvas" aria-hidden="true"></canvas>
   </div>
 
   <!-- Main Hero Stage Container -->
@@ -1987,107 +1961,12 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
       <div class="hero-left-col">
-        <!-- Handwritten Signature in Serendipity (All-Caps USHSS with Centerline Mask Reveal) -->
-        <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
-          <!--
-            SVG layout (viewBox 0 0 834 220, font-size 200px, baseline y=180):
-            Glyph positions from Serendipity metrics (upem=1000, scale=0.2):
-              U  : x=0    advance=183.4  glyph L=9.6   R=173.8
-              S1 : x=193  advance=133.6  glyph L=204.6 R=316.8
-              H  : x=337  advance=190.6  glyph L=348   R=516.2
-              S2 : x=538  advance=133.6  glyph L=548.8 R=661
-              S3 : x=681  advance=133.6  glyph L=692.4 R=804.6
-            letter-spacing: 10 font-units = 2px at this scale (uniform tracking)
-          -->
-          <svg class="hero-signature-svg" id="hero-signature-svg"
-               viewBox="0 0 834 220" fill="none" xmlns="http://www.w3.org/2000/svg"
-               role="img" aria-label="USHSS">
-            <defs>
-              <!-- === PER-LETTER MASKS: each letter has its own mask === -->
-
-              <!-- MASK U -->
-              <mask id="mask-u" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="220">
-                <!-- U: left stem top→down, curve at bottom, right stem up -->
-                <path id="ms-u1" class="mask-stroke"
-                  d="M 48 20 L 48 142 C 48 186 146 186 146 142 L 146 20"/>
-              </mask>
-
-              <!-- MASK S1 (x offset 193) -->
-              <mask id="mask-s1" maskUnits="userSpaceOnUse" x="193" y="0" width="140" height="220">
-                <!-- S: top terminal → upper belly → middle → lower belly → bottom terminal -->
-                <path id="ms-s1" class="mask-stroke"
-                  d="M 295 34 C 265 24 215 38 215 65 C 215 95 305 105 305 138 C 305 172 260 182 212 172"/>
-              </mask>
-
-              <!-- MASK H (x offset 337) -->
-              <mask id="mask-h" maskUnits="userSpaceOnUse" x="337" y="0" width="210" height="220">
-                <!-- H left vertical -->
-                <path id="ms-h1" class="mask-stroke"
-                  d="M 383 20 L 383 175"/>
-                <!-- H right vertical -->
-                <path id="ms-h2" class="mask-stroke"
-                  d="M 478 20 L 478 175"/>
-                <!-- H crossbar (left to right) -->
-                <path id="ms-h3" class="mask-stroke"
-                  d="M 375 105 L 485 105"/>
-              </mask>
-
-              <!-- MASK S2 (x offset 538) -->
-              <mask id="mask-s2" maskUnits="userSpaceOnUse" x="538" y="0" width="140" height="220">
-                <path id="ms-s2" class="mask-stroke"
-                  d="M 640 34 C 610 24 560 38 560 65 C 560 95 650 105 650 138 C 650 172 605 182 557 172"/>
-              </mask>
-
-              <!-- MASK S3 (x offset 681) -->
-              <mask id="mask-s3" maskUnits="userSpaceOnUse" x="681" y="0" width="140" height="220">
-                <path id="ms-s3" class="mask-stroke"
-                  d="M 783 34 C 753 24 703 38 703 65 C 703 95 793 105 793 138 C 793 172 748 182 700 172"/>
-              </mask>
-            </defs>
-
-            <!-- Letter U: masked by mask-u, hidden until animation starts -->
-            <g id="sig-u" class="sig-letter-group" mask="url(#mask-u)">
-              <text class="sig-letter" x="0" y="180">U</text>
-            </g>
-
-            <!-- Letter S1: masked by mask-s1 -->
-            <g id="sig-s1" class="sig-letter-group" mask="url(#mask-s1)">
-              <text class="sig-letter" x="193" y="180">S</text>
-            </g>
-
-            <!-- Letter H: masked by mask-h -->
-            <g id="sig-h" class="sig-letter-group" mask="url(#mask-h)">
-              <text class="sig-letter" x="337" y="180">H</text>
-            </g>
-
-            <!-- Letter S2: masked by mask-s2 -->
-            <g id="sig-s2" class="sig-letter-group" mask="url(#mask-s2)">
-              <text class="sig-letter" x="538" y="180">S</text>
-            </g>
-
-            <!-- Letter S3: masked by mask-s3 -->
-            <g id="sig-s3" class="sig-letter-group" mask="url(#mask-s3)">
-              <text class="sig-letter" x="681" y="180">S</text>
-            </g>
-
-            <!-- Debug Centerline Overlay (?debug=1): red paths over glyphs -->
-            <g id="sig-debug-group" style="display:none; pointer-events:none;">
-              <path class="debug-centerline" d="M 22 32 L 22 162 C 22 192 162 192 162 162 L 162 32"/>
-              <path class="debug-centerline" d="M 303 36 C 303 24 253 22 230 30 C 208 38 208 56 215 72 C 222 86 253 90 265 100 C 278 112 298 126 298 148 C 298 168 278 180 258 180 C 240 180 210 174 208 162"/>
-              <path class="debug-centerline" d="M 358 30 L 358 174"/>
-              <path class="debug-centerline" d="M 506 30 L 506 174"/>
-              <path class="debug-centerline" d="M 358 102 L 506 102"/>
-              <path class="debug-centerline" d="M 648 36 C 648 24 598 22 575 30 C 553 38 553 56 560 72 C 567 86 598 90 610 100 C 623 112 643 126 643 148 C 643 168 623 180 603 180 C 585 180 555 174 553 162"/>
-              <path class="debug-centerline" d="M 792 36 C 792 24 742 22 719 30 C 697 38 697 56 704 72 C 711 86 742 90 754 100 C 767 112 787 126 787 148 C 787 168 767 180 747 180 C 729 180 699 174 697 162"/>
-            </g>
-          </svg>
+        <!-- Spatial anchor for Serendipity particle text -->
+        <div class="hero-particle-wrap" id="particle-wrap" aria-hidden="true">
+          <div class="hero-fallback-title">USHSS</div>
         </div>
-
-        <!-- noscript fallback: show the word as plain text if JS disabled -->
         <noscript>
-          <div style="font-family:var(--font-signature),'Protest Revolution',serif;
-                      font-size:clamp(2.5rem,8vw,6rem);color:var(--mist-200);
-                      letter-spacing:0.04em;margin-bottom:1rem;">USHSS</div>
+          <div class="hero-fallback-title" style="opacity:1;display:block;">USHSS</div>
         </noscript>
         <div class="hero-stagger-item hero-eyebrow-wrap">
           <span class="hero-eyebrow">University School of Humanities &amp; Social Sciences</span>
@@ -3174,201 +3053,576 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     });
   }
 
-  function initHeroSequence(){
+  // ==========================================================================
+  // USHSS HERO WORD-PARTICLE SYSTEM
+  // High-performance word particles rushing together to form "USHSS"
+  // Physics: Spring-damper to targets + Mouse repulsion & spring-back
+  // Zero allocations in animation loop (Float32Array / Uint8Array)
+  // ==========================================================================
+  function initHeroParticleSystem(){
     document.documentElement.classList.add('site-loaded');
 
-    var debugGroup = document.getElementById('sig-debug-group');
+    var canvas = document.getElementById('hero-particle-canvas');
+    var anchorWrap = document.getElementById('particle-wrap');
+    var heroSection = document.getElementById('home');
+    if(!canvas || !anchorWrap || !heroSection) return;
 
-    // ── Debug mode (?debug=1) ──
-    var urlParams;
-    try { urlParams = new URLSearchParams(window.location.search); } catch(e){ urlParams = null; }
-    var isDebug = urlParams && urlParams.get('debug') === '1';
-    if(isDebug && debugGroup) debugGroup.style.display = 'block';
+    var ctx = canvas.getContext('2d', { alpha: true });
+    if(!ctx) return;
 
-    // ── Map: each letter group, its mask strokes, and their order ──
-    // Each entry:
-    //   letterEl: the <g id="sig-X"> to make visible at stroke start
-    //   strokes: array of { el: DOM path, dur, gap } in pen order
-    //   finalEl: group to remove mask from when letter is done
-    var letterDefs = [
-      {
-        groupId: 'sig-u',
-        maskId: 'mask-u',
-        strokes: [
-          { strokeId: 'ms-u1', dur: 0.32, gap: 0.05 }
-        ]
-      },
-      {
-        groupId: 'sig-s1',
-        maskId: 'mask-s1',
-        strokes: [
-          { strokeId: 'ms-s1', dur: 0.30, gap: 0.05 }
-        ]
-      },
-      {
-        groupId: 'sig-h',
-        maskId: 'mask-h',
-        strokes: [
-          { strokeId: 'ms-h1', dur: 0.14, gap: 0.03 },
-          { strokeId: 'ms-h2', dur: 0.14, gap: 0.03 },
-          { strokeId: 'ms-h3', dur: 0.12, gap: 0.05 }
-        ]
-      },
-      {
-        groupId: 'sig-s2',
-        maskId: 'mask-s2',
-        strokes: [
-          { strokeId: 'ms-s2', dur: 0.30, gap: 0.05 }
-        ]
-      },
-      {
-        groupId: 'sig-s3',
-        maskId: 'mask-s3',
-        strokes: [
-          { strokeId: 'ms-s3', dur: 0.30, gap: 0.0 }
-        ]
-      }
-    ];
-
-    // ── Reduced-motion / no-GSAP fallback: show everything immediately ──
-    if(prefersReduced || typeof gsap === 'undefined'){
-      var sigWrap = document.getElementById('signature-wrap');
-      if(sigWrap) sigWrap.style.visibility = 'visible';
-      letterDefs.forEach(function(ld){
-        var grp = document.getElementById(ld.groupId);
-        if(grp){
-          grp.style.visibility = 'visible';
-          grp.removeAttribute('mask');
-        }
-        ld.strokes.forEach(function(s){
-          var el = document.getElementById(s.strokeId);
-          if(el){
-            el.style.visibility = 'visible';
-            el.style.strokeDashoffset = '-0.02';
-          }
-        });
-      });
+    // Check prefers-reduced-motion
+    var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if(prefersReduced){
+      // Reveal items immediately and fallback static title
+      var fallback = anchorWrap.querySelector('.hero-fallback-title');
+      if(fallback) fallback.style.opacity = '1';
       document.querySelectorAll('.hero-stagger-item').forEach(function(el){
-        el.style.visibility = 'visible';
-        el.style.transform = 'none';
-        el.style.opacity = '1';
+        el.classList.add('revealed');
       });
       return;
     }
 
-    // ── STEP 1: Set all strokes to fully hidden before making signature visible ──
-    letterDefs.forEach(function(ld){
-      var grp = document.getElementById(ld.groupId);
-      if(grp){
-        gsap.set(grp, { autoAlpha: 0 });
+    var WORDS = ["ideas", "society", "thought", "culture", "English", "Economics", "critical"];
+    var COLORS = ["#D3D9D4", "#5FB8CC"]; // 80% mist-200, 20% teal-300
+    var FONT_SIZES = [9, 10.5, 12];
+    var ANGLES = [-10, -5, 0, 5, 10]; // degrees
+
+    // ── Build Atlas ──
+    var atlasEntries = [];
+    var atlasCanvas = document.createElement('canvas');
+    atlasCanvas.width = 1024;
+    atlasCanvas.height = 1024;
+    var actx = atlasCanvas.getContext('2d');
+
+    var curAx = 2;
+    var curAy = 2;
+    var rowMaxH = 0;
+
+    // 1. Word sprites
+    for(var cIdx = 0; cIdx < COLORS.length; cIdx++){
+      var col = COLORS[cIdx];
+      for(var wIdx = 0; wIdx < WORDS.length; wIdx++){
+        var word = WORDS[wIdx];
+        for(var sIdx = 0; sIdx < FONT_SIZES.length; sIdx++){
+          var fsz = FONT_SIZES[sIdx];
+          for(var aIdx = 0; aIdx < ANGLES.length; aIdx++){
+            var angDeg = ANGLES[aIdx];
+            var angRad = angDeg * Math.PI / 180;
+
+            actx.font = fsz + 'px "Times New Roman", serif';
+            var tm = actx.measureText(word);
+            var tw = Math.ceil(tm.width) + 4;
+            var th = Math.ceil(fsz * 1.3) + 4;
+
+            // Bounding box with rotation
+            var cosA = Math.abs(Math.cos(angRad));
+            var sinA = Math.abs(Math.sin(angRad));
+            var bw = Math.ceil(tw * cosA + th * sinA) + 4;
+            var bh = Math.ceil(tw * sinA + th * cosA) + 4;
+
+            if(curAx + bw > 1020){
+              curAx = 2;
+              curAy += rowMaxH + 4;
+              rowMaxH = 0;
+            }
+            if(curAy + bh > 1020){
+              console.warn('Atlas overflow');
+              break;
+            }
+
+            actx.save();
+            actx.translate(curAx + bw / 2, curAy + bh / 2);
+            actx.rotate(angRad);
+            actx.font = fsz + 'px "Times New Roman", serif';
+            actx.fillStyle = col;
+            actx.textAlign = 'center';
+            actx.textBaseline = 'middle';
+            actx.fillText(word, 0, 0);
+            actx.restore();
+
+            atlasEntries.push({
+              sx: curAx,
+              sy: curAy,
+              sw: bw,
+              sh: bh,
+              cx: bw / 2,
+              cy: bh / 2,
+              isBokeh: 0
+            });
+
+            curAx += bw + 4;
+            if(bh > rowMaxH) rowMaxH = bh;
+          }
+        }
       }
-      ld.strokes.forEach(function(s){
-        var el = document.getElementById(s.strokeId);
-        if(el){
-          var len = Math.ceil(el.getTotalLength ? el.getTotalLength() : 400) + 10;
-          s.len = len;
-          el.setAttribute('stroke-linecap', 'butt');
-          el.setAttribute('stroke-dasharray', len + ' ' + (len * 2));
-          el.setAttribute('stroke-dashoffset', len);
-          gsap.set(el, { opacity: 0 });
-        }
-      });
-    });
-
-    // ── STEP 2: Reveal the signature wrap container ──
-    var sigWrap = document.getElementById('signature-wrap');
-    if(sigWrap) sigWrap.style.visibility = 'visible';
-
-    // ── STEP 3: Build master GSAP timeline ──
-    var heroTl = gsap.timeline({
-      delay: 0.2,
-      defaults: { ease: 'power2.inOut' }
-    });
-    window.__sig = heroTl;
-
-    // For each letter, strictly sequential:
-    // U -> S -> H -> S -> S
-    letterDefs.forEach(function(ld, li){
-      var grp = document.getElementById(ld.groupId);
-
-      // Make letter group visible in the timeline at the start of its turn
-      heroTl.set(grp, { autoAlpha: 1 });
-
-      ld.strokes.forEach(function(s, si){
-        var strokeEl = document.getElementById(s.strokeId);
-
-        // Turn on stroke opacity in the timeline
-        heroTl.set(strokeEl, { opacity: 1 });
-
-        // Animate stroke reveal: dashoffset s.len -> 0
-        heroTl.to(strokeEl, {
-          attr: { 'stroke-dashoffset': 0 },
-          duration: s.dur,
-          ease: 'power2.inOut'
-        });
-
-        // Pen-lift gap after each stroke
-        if(s.gap > 0){
-          heroTl.to({}, { duration: s.gap });
-        }
-      });
-
-      // After all strokes for this letter: remove mask so crisp plain glyph shows
-      heroTl.call(function(){
-        if(grp) grp.removeAttribute('mask');
-      });
-    });
-
-    // ── STEP 4: Stagger the rest of the hero content in after USHSS is fully written ──
-    heroTl.to('.hero-stagger-item', {
-      autoAlpha: 1,
-      y: 0,
-      duration: 0.7,
-      stagger: 0.1,
-      ease: 'power3.out',
-      clearProps: 'transform,will-change'
-    }, '+=0.06');
-
-    // ── STEP 5: Support ?t= and ?progress= for frame capture / debugging ──
-    if(urlParams){
-      var forceTime = urlParams.get('t');
-      var forceProgress = urlParams.get('progress');
-      try {
-        if(forceProgress !== null){
-          var pVal = parseFloat(forceProgress);
-          if(!isNaN(pVal)){
-            heroTl.progress(pVal);
-            heroTl.pause();
-          }
-        } else if(forceTime !== null){
-          var tVal = parseFloat(forceTime);
-          if(!isNaN(tVal)){
-            heroTl.seek(tVal);
-            heroTl.pause();
-          }
-        }
-      } catch(e){}
     }
+
+    // 2. Bokeh soft circles in atlas
+    var BOKEH_SIZES = [8, 14, 20];
+    var BOKEH_COLORS = ['rgba(95, 184, 204, 0.25)', 'rgba(116, 141, 146, 0.2)'];
+    var bokehAtlasIds = [];
+
+    for(var bcIdx = 0; bcIdx < BOKEH_COLORS.length; bcIdx++){
+      var bcol = BOKEH_COLORS[bcIdx];
+      for(var bsIdx = 0; bsIdx < BOKEH_SIZES.length; bsIdx++){
+        var r = BOKEH_SIZES[bsIdx];
+        var d = r * 2 + 4;
+
+        if(curAx + d > 1020){
+          curAx = 2;
+          curAy += rowMaxH + 4;
+          rowMaxH = 0;
+        }
+
+        var grad = actx.createRadialGradient(curAx + r + 2, curAy + r + 2, 0, curAx + r + 2, curAy + r + 2, r);
+        grad.addColorStop(0, bcol);
+        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+        actx.fillStyle = grad;
+        actx.beginPath();
+        actx.arc(curAx + r + 2, curAy + r + 2, r, 0, Math.PI * 2);
+        actx.fill();
+
+        var bId = atlasEntries.length;
+        atlasEntries.push({
+          sx: curAx,
+          sy: curAy,
+          sw: d,
+          sh: d,
+          cx: d / 2,
+          cy: d / 2,
+          isBokeh: 1
+        });
+        bokehAtlasIds.push(bId);
+
+        curAx += d + 4;
+        if(d > rowMaxH) rowMaxH = d;
+      }
+    }
+
+    // ── Particle arrays ──
+    var MAX_PARTICLES = 3600;
+    var pX = new Float32Array(MAX_PARTICLES);
+    var pY = new Float32Array(MAX_PARTICLES);
+    var pVx = new Float32Array(MAX_PARTICLES);
+    var pVy = new Float32Array(MAX_PARTICLES);
+    var pTx = new Float32Array(MAX_PARTICLES);
+    var pTy = new Float32Array(MAX_PARTICLES);
+    var pDelay = new Float32Array(MAX_PARTICLES);
+    var pAlpha = new Float32Array(MAX_PARTICLES);
+    var pTargetAlpha = new Float32Array(MAX_PARTICLES);
+    var pTwinkleSpeed = new Float32Array(MAX_PARTICLES);
+    var pTwinklePhase = new Float32Array(MAX_PARTICLES);
+    var pAtlasId = new Uint16Array(MAX_PARTICLES);
+    var pIsBokeh = new Uint8Array(MAX_PARTICLES);
+    var particleCount = 0;
+
+    var width = 0;
+    var height = 0;
+    var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+    // Mouse coordinates relative to hero
+    var mouseX = -9999;
+    var mouseY = -9999;
+    var mouseActive = false;
+
+    function handlePointer(clientX, clientY){
+      var rect = heroSection.getBoundingClientRect();
+      mouseX = clientX - rect.left;
+      mouseY = clientY - rect.top;
+      mouseActive = true;
+    }
+
+    window.addEventListener('pointermove', function(e){
+      handlePointer(e.clientX, e.clientY);
+    }, { passive: true });
+
+    window.addEventListener('touchmove', function(e){
+      if(e.touches && e.touches[0]){
+        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    window.addEventListener('pointerleave', function(){
+      mouseX = -9999;
+      mouseY = -9999;
+      mouseActive = false;
+    });
+
+    window.addEventListener('blur', function(){
+      mouseX = -9999;
+      mouseY = -9999;
+      mouseActive = false;
+    });
+
+    // ── Sample target points from offscreen canvas ──
+    function sampleTargetPoints(){
+      var isMobile = window.innerWidth <= 768;
+      var cap = isMobile ? 1800 : 3500;
+
+      var heroRect = heroSection.getBoundingClientRect();
+      var anchorRect = anchorWrap.getBoundingClientRect();
+
+      var leftOffset = anchorRect.left - heroRect.left;
+      var topOffset = anchorRect.top - heroRect.top;
+      var targetWidth = anchorRect.width || (isMobile ? width * 0.8 : Math.min(width * 0.52, 620));
+
+      // Font size to fit target width
+      // USHSS in Serendipity: aspect ratio width/height is ~3.8
+      var fontSize = Math.round(targetWidth / 3.4);
+      if(isMobile) fontSize = Math.max(fontSize, 65);
+      else fontSize = Math.max(fontSize, 110);
+
+      var offCanvas = document.createElement('canvas');
+      offCanvas.width = Math.ceil(width);
+      offCanvas.height = Math.ceil(height);
+      var octx = offCanvas.getContext('2d', { willReadFrequently: true });
+      if(!octx) return;
+
+      octx.font = 'bold ' + fontSize + 'px Serendipity, "Protest Revolution", Georgia, serif';
+      octx.fillStyle = '#FFFFFF';
+      octx.textBaseline = 'top';
+      octx.fillText('USHSS', leftOffset, topOffset);
+
+      var sampleBoxW = Math.min(width, Math.ceil(leftOffset + targetWidth * 1.15));
+      var sampleBoxH = Math.min(height, Math.ceil(topOffset + fontSize * 1.5));
+      var sampleBoxX = Math.max(0, Math.floor(leftOffset - 10));
+      var sampleBoxY = Math.max(0, Math.floor(topOffset - 10));
+      var imgW = sampleBoxW - sampleBoxX;
+      var imgH = sampleBoxH - sampleBoxY;
+
+      if(imgW <= 0 || imgH <= 0) return;
+
+      var imgData = octx.getImageData(sampleBoxX, sampleBoxY, imgW, imgH);
+      var data = imgData.data;
+
+      var gridStep = isMobile ? 6 : 5;
+      var rawPoints = [];
+
+      for(var y = 0; y < imgH; y += gridStep){
+        for(var x = 0; x < imgW; x += gridStep){
+          var idx = (y * imgW + x) * 4;
+          if(data[idx + 3] > 120){
+            rawPoints.push({
+              x: sampleBoxX + x + (Math.random() - 0.5) * 1.5,
+              y: sampleBoxY + y + (Math.random() - 0.5) * 1.5
+            });
+          }
+        }
+      }
+
+      // If count > cap, dynamically increase step / decimate
+      if(rawPoints.length > cap){
+        var ratio = cap / rawPoints.length;
+        var filtered = [];
+        for(var i = 0; i < rawPoints.length; i++){
+          if(Math.random() < ratio) filtered.push(rawPoints[i]);
+        }
+        rawPoints = filtered;
+      }
+
+      // Shuffle raw points
+      for(var i = rawPoints.length - 1; i > 0; i--){
+        var j = Math.floor(Math.random() * (i + 1));
+        var temp = rawPoints[i];
+        rawPoints[i] = rawPoints[j];
+        rawPoints[j] = temp;
+      }
+
+      var numWordAtlas = atlasEntries.length - bokehAtlasIds.length;
+      particleCount = Math.min(rawPoints.length, MAX_PARTICLES);
+
+      var minX = 999999;
+      var maxX = -999999;
+      for(var i = 0; i < particleCount; i++){
+        if(rawPoints[i].x < minX) minX = rawPoints[i].x;
+        if(rawPoints[i].x > maxX) maxX = rawPoints[i].x;
+      }
+      var spanX = (maxX - minX) || 1;
+
+      for(var i = 0; i < particleCount; i++){
+        var pt = rawPoints[i];
+        pTx[i] = pt.x;
+        pTy[i] = pt.y;
+
+        // Initial scatter position: dispersed around hero
+        var scatterAngle = Math.random() * Math.PI * 2;
+        var scatterDist = 150 + Math.random() * (width * 0.55);
+        pX[i] = pt.x + Math.cos(scatterAngle) * scatterDist;
+        pY[i] = pt.y + Math.sin(scatterAngle) * scatterDist;
+        pVx[i] = (Math.random() - 0.5) * 40;
+        pVy[i] = (Math.random() - 0.5) * 40;
+
+        // Assemble delay: strictly left-to-right cascade (0.0 to 0.7s)
+        var normX = (pt.x - minX) / spanX;
+        pDelay[i] = normX * 0.55 + Math.random() * 0.12;
+
+        pAlpha[i] = 0.05;
+        pTargetAlpha[i] = 0.85 + Math.random() * 0.15;
+        pTwinkleSpeed[i] = 1.5 + Math.random() * 2.5;
+        pTwinklePhase[i] = Math.random() * Math.PI * 2;
+
+        // 88% word particles, 12% bokeh
+        if(Math.random() < 0.12 && bokehAtlasIds.length > 0){
+          var bIdx = bokehAtlasIds[Math.floor(Math.random() * bokehAtlasIds.length)];
+          pAtlasId[i] = bIdx;
+          pIsBokeh[i] = 1;
+        } else {
+          // Color distribution: 80% color 0 (#D3D9D4), 20% color 1 (#5FB8CC)
+          var wordSpriteId = Math.floor(Math.random() * numWordAtlas);
+          pAtlasId[i] = wordSpriteId;
+          pIsBokeh[i] = 0;
+        }
+      }
+    }
+
+    function resize(){
+      var rect = heroSection.getBoundingClientRect();
+      width = rect.width;
+      height = rect.height;
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+
+      sampleTargetPoints();
+    }
+
+    var resizeTimer = null;
+    window.addEventListener('resize', function(){
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(resize, 200);
+    });
+
+    // Check for ?t= or ?progress= in URL
+    var urlParams = null;
+    try { urlParams = new URLSearchParams(window.location.search); } catch(e){}
+    var forceT = urlParams ? urlParams.get('t') : null;
+
+    resize();
+
+    // ── Animation Loop ──
+    var startTime = performance.now();
+    var lastTime = startTime;
+    var textRevealed = false;
+    var isRunning = true;
+
+    // Repulsion radius
+    var repRadius = (window.innerWidth <= 768) ? 75 : 120;
+    var repRadiusSq = repRadius * repRadius;
+
+    function render(now){
+      if(!isRunning) return;
+
+      var dt = Math.min((now - lastTime) / 1000, 0.05);
+      lastTime = now;
+      var elapsed = (now - startTime) / 1000;
+
+      // Check text reveal after formation (~1.25s)
+      if(!textRevealed && elapsed >= 1.25){
+        textRevealed = true;
+        var staggerItems = document.querySelectorAll('.hero-stagger-item');
+        staggerItems.forEach(function(el, idx){
+          if(forceT !== null){
+            el.classList.add('revealed');
+          } else {
+            setTimeout(function(){
+              el.classList.add('revealed');
+            }, idx * 80);
+          }
+        });
+      }
+
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      // Spring constant: higher initially for quick snap, softer later
+      var springK = (elapsed < 1.1) ? 55 : 36;
+      var damping = Math.pow(0.82, dt * 60);
+
+      var hasMouse = mouseActive && mouseX > -1000 && mouseY > -1000;
+
+      // Pass 1: Word particles (source-over)
+      ctx.globalCompositeOperation = 'source-over';
+
+      for(var i = 0; i < particleCount; i++){
+        if(pIsBokeh[i] === 1) continue;
+
+        var curDelay = pDelay[i];
+        if(elapsed < curDelay){
+          // Float slowly before rushing
+          pX[i] += pVx[i] * dt * 0.3;
+          pY[i] += pVy[i] * dt * 0.3;
+          pAlpha[i] = 0.08;
+        } else {
+          // Rush towards target
+          var timeSinceStart = elapsed - curDelay;
+          var rushProgress = Math.min(timeSinceStart / 0.45, 1.0);
+
+          var tx = pTx[i];
+          var ty = pTy[i];
+
+          // Small subtle idle jitter after formed
+          if(rushProgress >= 1.0){
+            var jPhase = elapsed * 2.0 + i;
+            tx += Math.sin(jPhase) * 0.45;
+            ty += Math.cos(jPhase * 0.8) * 0.45;
+          }
+
+          var dx = tx - pX[i];
+          var dy = ty - pY[i];
+
+          var ax = dx * springK;
+          var ay = dy * springK;
+
+          // Mouse repulsion force
+          if(hasMouse){
+            var mdx = pX[i] - mouseX;
+            var mdy = pY[i] - mouseY;
+            var distSq = mdx * mdx + mdy * mdy;
+            if(distSq < repRadiusSq && distSq > 0.1){
+              var dist = Math.sqrt(distSq);
+              var force = (1.0 - dist / repRadius) * 2800;
+              ax += (mdx / dist) * force;
+              ay += (mdy / dist) * force;
+            }
+          }
+
+          pVx[i] = (pVx[i] + ax * dt) * damping;
+          pVy[i] = (pVy[i] + ay * dt) * damping;
+
+          pX[i] += pVx[i] * dt;
+          pY[i] += pVy[i] * dt;
+
+          // Alpha ramp
+          if(pAlpha[i] < pTargetAlpha[i]){
+            pAlpha[i] = Math.min(pAlpha[i] + dt * 2.5, pTargetAlpha[i]);
+          }
+        }
+
+        // Draw sprite
+        var ent = atlasEntries[pAtlasId[i]];
+        if(ent){
+          var alpha = pAlpha[i];
+          if(elapsed > 1.2){
+            // Subtle slow twinkle
+            alpha += Math.sin(elapsed * pTwinkleSpeed[i] + pTwinklePhase[i]) * 0.08;
+            alpha = Math.max(0.15, Math.min(alpha, 1.0));
+          }
+          ctx.globalAlpha = alpha;
+          ctx.drawImage(atlasCanvas, ent.sx, ent.sy, ent.sw, ent.sh,
+                        pX[i] - ent.cx, pY[i] - ent.cy, ent.sw, ent.sh);
+        }
+      }
+
+      // Pass 2: Bokeh soft glowing specks (screen composite)
+      ctx.globalCompositeOperation = 'screen';
+
+      for(var i = 0; i < particleCount; i++){
+        if(pIsBokeh[i] === 0) continue;
+
+        var curDelay = pDelay[i];
+        if(elapsed >= curDelay){
+          var tx = pTx[i];
+          var ty = pTy[i];
+
+          var dx = tx - pX[i];
+          var dy = ty - pY[i];
+
+          var ax = dx * (springK * 0.7);
+          var ay = dy * (springK * 0.7);
+
+          if(hasMouse){
+            var mdx = pX[i] - mouseX;
+            var mdy = pY[i] - mouseY;
+            var distSq = mdx * mdx + mdy * mdy;
+            if(distSq < repRadiusSq && distSq > 0.1){
+              var dist = Math.sqrt(distSq);
+              var force = (1.0 - dist / repRadius) * 2200;
+              ax += (mdx / dist) * force;
+              ay += (mdy / dist) * force;
+            }
+          }
+
+          pVx[i] = (pVx[i] + ax * dt) * damping;
+          pVy[i] = (pVy[i] + ay * dt) * damping;
+
+          pX[i] += pVx[i] * dt;
+          pY[i] += pVy[i] * dt;
+
+          if(pAlpha[i] < pTargetAlpha[i]){
+            pAlpha[i] = Math.min(pAlpha[i] + dt * 1.5, pTargetAlpha[i]);
+          }
+        }
+
+        var ent = atlasEntries[pAtlasId[i]];
+        if(ent){
+          ctx.globalAlpha = pAlpha[i] * 0.7;
+          ctx.drawImage(atlasCanvas, ent.sx, ent.sy, ent.sw, ent.sh,
+                        pX[i] - ent.cx, pY[i] - ent.cy, ent.sw, ent.sh);
+        }
+      }
+
+      ctx.restore();
+
+      if(isRunning){
+        requestAnimationFrame(render);
+      }
+    }
+
+    // Support ?t=<seconds> for exact headless test verification
+    if(forceT !== null){
+      var targetT = parseFloat(forceT);
+      if(!isNaN(targetT) && targetT >= 0){
+        // Simulate forward to targetT in 1/60s steps
+        var step = 1 / 60;
+        var simElapsed = 0;
+        while(simElapsed < targetT){
+          simElapsed += step;
+          render(startTime + simElapsed * 1000);
+        }
+        // Draw one final frame at target time
+        render(startTime + targetT * 1000);
+        return; // Pause simulation at target frame
+      }
+    }
+
+    // Pause when offscreen or tab hidden
+    document.addEventListener('visibilitychange', function(){
+      if(document.hidden){
+        isRunning = false;
+      } else {
+        if(!isRunning){
+          isRunning = true;
+          lastTime = performance.now();
+          requestAnimationFrame(render);
+        }
+      }
+    });
+
+    requestAnimationFrame(render);
   }
 
-  // ── Wait for Serendipity font to load before starting, so glyphs are correct ──
-  // font-display:block ensures the font blocks paint (no FOUC)
-  function startWhenReady(){
+  // ── Wait for Serendipity font before initializing particle canvas ──
+  function startHeroSystemWhenReady(){
     if(document.fonts && document.fonts.ready){
       document.fonts.ready.then(function(){
-        initHeroSequence();
+        initHeroParticleSystem();
       }).catch(function(){
-        initHeroSequence();
+        initHeroParticleSystem();
       });
     } else {
-      initHeroSequence();
+      initHeroParticleSystem();
     }
   }
 
   if(document.readyState === 'loading'){
-    document.addEventListener('DOMContentLoaded', startWhenReady);
+    document.addEventListener('DOMContentLoaded', startHeroSystemWhenReady);
   } else {
-    startWhenReady();
+    startHeroSystemWhenReady();
   }
 
   /* ═══════════════════════════════════════════════════
