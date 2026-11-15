@@ -57,7 +57,7 @@
   src: url('/static/fonts/serendipity.ttf') format('truetype');
   font-weight: normal;
   font-style: normal;
-  font-display: swap;
+  font-display: block;
 }
 @font-face {
   font-family: 'Protest Revolution';
@@ -436,15 +436,23 @@ nav.scrolled{
 
 /* ── EDITORIAL MOTION & NO-JS FALLBACKS ── */
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0}
-.no-js .hero-stagger-item { opacity: 1 !important; transform: none !important; }
-.no-js .sig-stroke, .no-js .sig-stroke-in { stroke-dashoffset: 0 !important; }
+
+/* noscript / no-js: show everything immediately */
+.no-js .hero-stagger-item { visibility: visible !important; transform: none !important; }
+.no-js .hero-signature-wrap { visibility: visible !important; }
+.no-js .sig-letter-group { visibility: visible !important; }
+.no-js .mask-stroke { stroke-dashoffset: -0.02 !important; visibility: visible !important; }
 .no-js #pen-tip { display: none !important; }
+
 .btn-gold, .btn-outline { transition: color .25s, background-color .25s, border-color .25s, transform .25s, box-shadow .25s; }
 .btn-gold:hover, .btn-outline:hover { transform: translateY(-2px); box-shadow: 0 7px 18px rgba(74,14,14,.12); }
 .value-card, .prog-card, .faculty-card { will-change: transform; }
 @media (prefers-reduced-motion: reduce) {
-  .hero-stagger-item { opacity: 1 !important; transform: none !important; }
-  .sig-stroke, .sig-stroke-in { stroke-dashoffset: 0 !important; }
+  /* Show finished state immediately — no animation */
+  .hero-signature-wrap { visibility: visible !important; }
+  .hero-stagger-item { visibility: visible !important; transform: none !important; }
+  .sig-letter-group { visibility: visible !important; }
+  .mask-stroke { stroke-dashoffset: -0.02 !important; visibility: visible !important; }
   #pen-tip { display: none !important; }
   .hero-video { animation: none !important; }
   .btn-gold, .btn-outline { transition: none !important; }
@@ -546,53 +554,84 @@ nav.scrolled{
   min-height: 0;
 }
 
-/* Left Content Column: width min(620px, 52vw), aligned with nav logo, text left-aligned */
+/* Left Content Column: width min(860px, 62vw), aligned with nav logo, text left-aligned */
 .hero-left-col {
   position: relative;
   z-index: 2;
-  width: min(620px, 52vw);
+  width: min(860px, 62vw);
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   text-align: left;
 }
 
-/* Handwritten Signature in Protest Revolution (All-Caps USHSS) */
+/* Handwritten Signature in Serendipity (All-Caps USHSS with Centerline Mask Reveal) */
 .hero-signature-wrap {
   width: 100%;
-  max-width: clamp(220px, 28vw, 460px);
+  /* Reserve space up front - no layout shift when font loads */
+  max-width: min(820px, 58vw);
   height: auto;
-  aspect-ratio: 540 / 160;
-  margin-bottom: clamp(0.5rem, 1.2vh, 1rem);
-  display: flex;
-  align-items: center;
+  /* viewBox is 834x220, so aspect-ratio = 834/220 */
+  aspect-ratio: 834 / 220;
+  margin-bottom: clamp(0.6rem, 1.4vh, 1.2rem);
+  display: block;
   overflow: visible;
   position: relative;
+  /* Hidden before JS runs — visibility:hidden reserves space but paints nothing */
+  visibility: hidden;
 }
 .hero-signature-svg {
   width: 100%;
   height: 100%;
   overflow: visible;
+  display: block;
 }
+
+/* Each per-letter group: hidden until its turn */
+.sig-letter-group {
+  visibility: hidden;
+}
+
+/* The actual text glyphs inside each group */
 .sig-letter {
   font-family: var(--font-signature);
-  font-size: 110px;
+  font-size: 200px;
   fill: var(--mist-200);
-  filter: drop-shadow(0 0 10px rgba(78, 174, 192, 0.55));
+  /* Uniform letter-spacing — rendered as individual <text> at computed x positions */
+  filter: drop-shadow(0 0 12px rgba(78, 174, 192, 0.5)) drop-shadow(0 2px 8px rgba(33, 42, 49, 0.7));
 }
-.mask-path {
+
+/* Mask centerline strokes — BUTT caps to prevent dot-at-zero artifact */
+.mask-stroke {
   fill: none;
-  stroke: #FFFFFF;
-  stroke-width: 32;
-  stroke-linecap: round;
+  stroke: #ffffff;
+  stroke-width: 68;
+  stroke-linecap: butt;
   stroke-linejoin: round;
-  pathLength: 1;
-  stroke-dasharray: 1;
-  stroke-dashoffset: 1;
+}
+
+/* Debug centerline overlay */
+.debug-centerline {
+  fill: none;
+  stroke: rgba(255, 60, 60, 0.85);
+  stroke-width: 3;
+  stroke-linecap: round;
+  pointer-events: none;
+}
+
+/* noscript / reduced-motion: show everything immediately */
+.no-js .hero-signature-wrap,
+.no-js .sig-letter-group {
+  visibility: visible !important;
+}
+.no-js .mask-stroke {
+  stroke-dashoffset: -0.02 !important;
+  visibility: visible !important;
 }
 
 .hero-stagger-item {
-  opacity: 0;
+  /* visibility:hidden reserves space and paints nothing — better than opacity:0 for no-flash */
+  visibility: hidden;
   transform: translate3d(0, 24px, 0);
   will-change: transform, opacity;
 }
@@ -814,8 +853,8 @@ nav.scrolled{
     max-width: 100%;
   }
   .hero-signature-wrap {
-    max-width: min(340px, 90%);
-    margin-bottom: 0.6rem;
+    max-width: min(380px, 95vw);
+    margin-bottom: 0.8rem;
   }
   .hero-tagline {
     font-size: clamp(1.85rem, 7.8vw, 2.5rem);
@@ -1950,48 +1989,106 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
       <div class="hero-left-col">
         <!-- Handwritten Signature in Serendipity (All-Caps USHSS with Centerline Mask Reveal) -->
         <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
-          <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 540 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!--
+            SVG layout (viewBox 0 0 834 220, font-size 200px, baseline y=180):
+            Glyph positions from Serendipity metrics (upem=1000, scale=0.2):
+              U  : x=0    advance=183.4  glyph L=9.6   R=173.8
+              S1 : x=193  advance=133.6  glyph L=204.6 R=316.8
+              H  : x=337  advance=190.6  glyph L=348   R=516.2
+              S2 : x=538  advance=133.6  glyph L=548.8 R=661
+              S3 : x=681  advance=133.6  glyph L=692.4 R=804.6
+            letter-spacing: 10 font-units = 2px at this scale (uniform tracking)
+          -->
+          <svg class="hero-signature-svg" id="hero-signature-svg"
+               viewBox="0 0 834 220" fill="none" xmlns="http://www.w3.org/2000/svg"
+               role="img" aria-label="USHSS">
             <defs>
-              <mask id="write-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="540" height="160">
-                <!-- Centerline reveal strokes in white (strictly sequential: U -> S -> H1,H2,H3 -> S -> S) -->
-                <!-- U: top of left stem, down, around curve, up right stem -->
-                <path id="m-u" class="mask-path" d="M 38 38 L 38 98 C 38 138 108 138 108 98 L 108 38" />
-                <!-- S1: top terminal, curve through spine, bottom terminal -->
-                <path id="m-s1" class="mask-path" d="M 178 50 C 176 34 135 32 135 56 C 135 86 186 90 186 116 C 186 142 134 142 128 122" />
-                <!-- H: left vertical top to bottom, right vertical top to bottom, crossbar left to right -->
-                <path id="m-h1" class="mask-path" d="M 232 34 L 232 138" />
-                <path id="m-h2" class="mask-path" d="M 302 34 L 302 138" />
-                <path id="m-h3" class="mask-path" d="M 230 85 L 304 85" />
-                <!-- S2 -->
-                <path id="m-s2" class="mask-path" d="M 383 50 C 381 34 340 32 340 56 C 340 86 391 90 391 116 C 391 142 339 142 333 122" />
-                <!-- S3 -->
-                <path id="m-s3" class="mask-path" d="M 478 50 C 476 34 435 32 435 56 C 435 86 486 90 486 116 C 486 142 434 142 428 122" />
+              <!-- === PER-LETTER MASKS: each letter has its own mask === -->
+
+              <!-- MASK U -->
+              <mask id="mask-u" maskUnits="userSpaceOnUse" x="0" y="0" width="200" height="220">
+                <!-- U: left stem top→down, curve at bottom, right stem up -->
+                <path id="ms-u1" class="mask-stroke"
+                  d="M 48 20 L 48 142 C 48 186 146 186 146 142 L 146 20"/>
+              </mask>
+
+              <!-- MASK S1 (x offset 193) -->
+              <mask id="mask-s1" maskUnits="userSpaceOnUse" x="193" y="0" width="140" height="220">
+                <!-- S: top terminal → upper belly → middle → lower belly → bottom terminal -->
+                <path id="ms-s1" class="mask-stroke"
+                  d="M 295 34 C 265 24 215 38 215 65 C 215 95 305 105 305 138 C 305 172 260 182 212 172"/>
+              </mask>
+
+              <!-- MASK H (x offset 337) -->
+              <mask id="mask-h" maskUnits="userSpaceOnUse" x="337" y="0" width="210" height="220">
+                <!-- H left vertical -->
+                <path id="ms-h1" class="mask-stroke"
+                  d="M 383 20 L 383 175"/>
+                <!-- H right vertical -->
+                <path id="ms-h2" class="mask-stroke"
+                  d="M 478 20 L 478 175"/>
+                <!-- H crossbar (left to right) -->
+                <path id="ms-h3" class="mask-stroke"
+                  d="M 375 105 L 485 105"/>
+              </mask>
+
+              <!-- MASK S2 (x offset 538) -->
+              <mask id="mask-s2" maskUnits="userSpaceOnUse" x="538" y="0" width="140" height="220">
+                <path id="ms-s2" class="mask-stroke"
+                  d="M 640 34 C 610 24 560 38 560 65 C 560 95 650 105 650 138 C 650 172 605 182 557 172"/>
+              </mask>
+
+              <!-- MASK S3 (x offset 681) -->
+              <mask id="mask-s3" maskUnits="userSpaceOnUse" x="681" y="0" width="140" height="220">
+                <path id="ms-s3" class="mask-stroke"
+                  d="M 783 34 C 753 24 703 38 703 65 C 703 95 793 105 793 138 C 793 172 748 182 700 172"/>
               </mask>
             </defs>
 
-            <!-- Real Serendipity font glyphs revealed by write-mask -->
-            <g id="sig-text-group" mask="url(#write-mask)">
-              <text id="letter-u" class="sig-letter" x="20" y="115">U</text>
-              <text id="letter-s1" class="sig-letter" x="120" y="115">S</text>
-              <text id="letter-h" class="sig-letter" x="215" y="115">H</text>
-              <text id="letter-s2" class="sig-letter" x="325" y="115">S</text>
-              <text id="letter-s3" class="sig-letter" x="420" y="115">S</text>
+            <!-- Letter U: masked by mask-u, hidden until animation starts -->
+            <g id="sig-u" class="sig-letter-group" mask="url(#mask-u)">
+              <text class="sig-letter" x="0" y="180">U</text>
             </g>
 
-            <!-- Debug Centerline Overlay (?debug=1) -->
-            <g id="sig-debug-group" style="display:none;" opacity="0.8">
-              <path class="debug-stroke-path" d="M 38 38 L 38 98 C 38 138 108 138 108 98 L 108 38" />
-              <path class="debug-stroke-path" d="M 178 50 C 176 34 135 32 135 56 C 135 86 186 90 186 116 C 186 142 134 142 128 122" />
-              <path class="debug-stroke-path" d="M 232 34 L 232 138" />
-              <path class="debug-stroke-path" d="M 302 34 L 302 138" />
-              <path class="debug-stroke-path" d="M 230 85 L 304 85" />
-              <path class="debug-stroke-path" d="M 383 50 C 381 34 340 32 340 56 C 340 86 391 90 391 116 C 391 142 339 142 333 122" />
-              <path class="debug-stroke-path" d="M 478 50 C 476 34 435 32 435 56 C 435 86 486 90 486 116 C 486 142 434 142 428 122" />
+            <!-- Letter S1: masked by mask-s1 -->
+            <g id="sig-s1" class="sig-letter-group" mask="url(#mask-s1)">
+              <text class="sig-letter" x="193" y="180">S</text>
+            </g>
+
+            <!-- Letter H: masked by mask-h -->
+            <g id="sig-h" class="sig-letter-group" mask="url(#mask-h)">
+              <text class="sig-letter" x="337" y="180">H</text>
+            </g>
+
+            <!-- Letter S2: masked by mask-s2 -->
+            <g id="sig-s2" class="sig-letter-group" mask="url(#mask-s2)">
+              <text class="sig-letter" x="538" y="180">S</text>
+            </g>
+
+            <!-- Letter S3: masked by mask-s3 -->
+            <g id="sig-s3" class="sig-letter-group" mask="url(#mask-s3)">
+              <text class="sig-letter" x="681" y="180">S</text>
+            </g>
+
+            <!-- Debug Centerline Overlay (?debug=1): red paths over glyphs -->
+            <g id="sig-debug-group" style="display:none; pointer-events:none;">
+              <path class="debug-centerline" d="M 22 32 L 22 162 C 22 192 162 192 162 162 L 162 32"/>
+              <path class="debug-centerline" d="M 303 36 C 303 24 253 22 230 30 C 208 38 208 56 215 72 C 222 86 253 90 265 100 C 278 112 298 126 298 148 C 298 168 278 180 258 180 C 240 180 210 174 208 162"/>
+              <path class="debug-centerline" d="M 358 30 L 358 174"/>
+              <path class="debug-centerline" d="M 506 30 L 506 174"/>
+              <path class="debug-centerline" d="M 358 102 L 506 102"/>
+              <path class="debug-centerline" d="M 648 36 C 648 24 598 22 575 30 C 553 38 553 56 560 72 C 567 86 598 90 610 100 C 623 112 643 126 643 148 C 643 168 623 180 603 180 C 585 180 555 174 553 162"/>
+              <path class="debug-centerline" d="M 792 36 C 792 24 742 22 719 30 C 697 38 697 56 704 72 C 711 86 742 90 754 100 C 767 112 787 126 787 148 C 787 168 767 180 747 180 C 729 180 699 174 697 162"/>
             </g>
           </svg>
         </div>
 
-        <!-- Eyebrow (Times New Roman, Small Caps, Teal-300) -->
+        <!-- noscript fallback: show the word as plain text if JS disabled -->
+        <noscript>
+          <div style="font-family:var(--font-signature),'Protest Revolution',serif;
+                      font-size:clamp(2.5rem,8vw,6rem);color:var(--mist-200);
+                      letter-spacing:0.04em;margin-bottom:1rem;">USHSS</div>
+        </noscript>
         <div class="hero-stagger-item hero-eyebrow-wrap">
           <span class="hero-eyebrow">University School of Humanities &amp; Social Sciences</span>
         </div>
@@ -3044,9 +3141,9 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 <button id="back-to-top" type="button" aria-label="Back to top" onclick="window.scrollTo(0,0)">↑</button><script>const backTopButton=document.getElementById("back-to-top");window.addEventListener("scroll",function(){backTopButton.classList.toggle("visible",window.scrollY>500)},{passive:true});</script>
 
 <!-- ── EXTERNAL LIBS: Lenis + GSAP + ScrollTrigger ── -->
-<script src="https://cdn.jsdelivr.net/npm/lenis@1/dist/lenis.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/gsap.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/gsap@3/dist/ScrollTrigger.min.js"></script>
+<script src="/static/js/lenis.min.js"></script>
+<script src="/static/js/gsap.min.js"></script>
+<script src="/static/js/ScrollTrigger.min.js"></script>
 
 <!-- ── MOTION ENGINE ── -->
 <script>
@@ -3080,123 +3177,198 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   function initHeroSequence(){
     document.documentElement.classList.add('site-loaded');
 
-    var sigGroup = document.getElementById('sig-text-group');
     var debugGroup = document.getElementById('sig-debug-group');
 
-    var strokeDefs = [
-      { id: '#m-u', dur: 0.28, gap: 0.05 },
-      { id: '#m-s1', dur: 0.26, gap: 0.05 },
-      { id: '#m-h1', dur: 0.14, gap: 0.03 },
-      { id: '#m-h2', dur: 0.14, gap: 0.03 },
-      { id: '#m-h3', dur: 0.12, gap: 0.05 },
-      { id: '#m-s2', dur: 0.26, gap: 0.05 },
-      { id: '#m-s3', dur: 0.26, gap: 0.0 }
+    // ── Debug mode (?debug=1) ──
+    var urlParams;
+    try { urlParams = new URLSearchParams(window.location.search); } catch(e){ urlParams = null; }
+    var isDebug = urlParams && urlParams.get('debug') === '1';
+    if(isDebug && debugGroup) debugGroup.style.display = 'block';
+
+    // ── Map: each letter group, its mask strokes, and their order ──
+    // Each entry:
+    //   letterEl: the <g id="sig-X"> to make visible at stroke start
+    //   strokes: array of { el: DOM path, dur, gap } in pen order
+    //   finalEl: group to remove mask from when letter is done
+    var letterDefs = [
+      {
+        groupId: 'sig-u',
+        maskId: 'mask-u',
+        strokes: [
+          { strokeId: 'ms-u1', dur: 0.32, gap: 0.05 }
+        ]
+      },
+      {
+        groupId: 'sig-s1',
+        maskId: 'mask-s1',
+        strokes: [
+          { strokeId: 'ms-s1', dur: 0.30, gap: 0.05 }
+        ]
+      },
+      {
+        groupId: 'sig-h',
+        maskId: 'mask-h',
+        strokes: [
+          { strokeId: 'ms-h1', dur: 0.14, gap: 0.03 },
+          { strokeId: 'ms-h2', dur: 0.14, gap: 0.03 },
+          { strokeId: 'ms-h3', dur: 0.12, gap: 0.05 }
+        ]
+      },
+      {
+        groupId: 'sig-s2',
+        maskId: 'mask-s2',
+        strokes: [
+          { strokeId: 'ms-s2', dur: 0.30, gap: 0.05 }
+        ]
+      },
+      {
+        groupId: 'sig-s3',
+        maskId: 'mask-s3',
+        strokes: [
+          { strokeId: 'ms-s3', dur: 0.30, gap: 0.0 }
+        ]
+      }
     ];
 
-    // Debug mode (?debug=1)
-    try {
-      var urlParams = new URLSearchParams(window.location.search);
-      if(urlParams.get('debug') === '1' && debugGroup){
-        debugGroup.style.display = 'block';
-      }
-    } catch(e){}
-
+    // ── Reduced-motion / no-GSAP fallback: show everything immediately ──
     if(prefersReduced || typeof gsap === 'undefined'){
-      if(sigGroup) sigGroup.removeAttribute('mask');
-      strokeDefs.forEach(function(s){
-        var el = document.querySelector(s.id);
-        if(el) el.style.strokeDashoffset = '0';
+      var sigWrap = document.getElementById('signature-wrap');
+      if(sigWrap) sigWrap.style.visibility = 'visible';
+      letterDefs.forEach(function(ld){
+        var grp = document.getElementById(ld.groupId);
+        if(grp){
+          grp.style.visibility = 'visible';
+          grp.removeAttribute('mask');
+        }
+        ld.strokes.forEach(function(s){
+          var el = document.getElementById(s.strokeId);
+          if(el){
+            el.style.visibility = 'visible';
+            el.style.strokeDashoffset = '-0.02';
+          }
+        });
       });
-      gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
+      document.querySelectorAll('.hero-stagger-item').forEach(function(el){
+        el.style.visibility = 'visible';
+        el.style.transform = 'none';
+        el.style.opacity = '1';
+      });
       return;
     }
 
-    // Reset mask strokes to initial hidden state
-    strokeDefs.forEach(function(s){
-      var el = document.querySelector(s.id);
-      if(el) el.style.strokeDashoffset = '1';
+    // ── STEP 1: Set all strokes to fully hidden before making signature visible ──
+    letterDefs.forEach(function(ld){
+      var grp = document.getElementById(ld.groupId);
+      if(grp){
+        gsap.set(grp, { autoAlpha: 0 });
+      }
+      ld.strokes.forEach(function(s){
+        var el = document.getElementById(s.strokeId);
+        if(el){
+          var len = Math.ceil(el.getTotalLength ? el.getTotalLength() : 400) + 10;
+          s.len = len;
+          el.setAttribute('stroke-linecap', 'butt');
+          el.setAttribute('stroke-dasharray', len + ' ' + (len * 2));
+          el.setAttribute('stroke-dashoffset', len);
+          gsap.set(el, { opacity: 0 });
+        }
+      });
     });
 
-    // Master Hero Timeline (starts ~0.2s after interactive)
+    // ── STEP 2: Reveal the signature wrap container ──
+    var sigWrap = document.getElementById('signature-wrap');
+    if(sigWrap) sigWrap.style.visibility = 'visible';
+
+    // ── STEP 3: Build master GSAP timeline ──
     var heroTl = gsap.timeline({
       delay: 0.2,
       defaults: { ease: 'power2.inOut' }
     });
-
-    // Expose timeline globally for scrubbing / testing
     window.__sig = heroTl;
 
-    // Sequential stroke-by-stroke handwriting: invisible hand, no dots, natural speed modulation
-    strokeDefs.forEach(function(s){
-      heroTl.to(s.id, {
-        strokeDashoffset: 0,
-        duration: s.dur,
-        ease: 'power2.inOut'
+    // For each letter, strictly sequential:
+    // U -> S -> H -> S -> S
+    letterDefs.forEach(function(ld, li){
+      var grp = document.getElementById(ld.groupId);
+
+      // Make letter group visible in the timeline at the start of its turn
+      heroTl.set(grp, { autoAlpha: 1 });
+
+      ld.strokes.forEach(function(s, si){
+        var strokeEl = document.getElementById(s.strokeId);
+
+        // Turn on stroke opacity in the timeline
+        heroTl.set(strokeEl, { opacity: 1 });
+
+        // Animate stroke reveal: dashoffset s.len -> 0
+        heroTl.to(strokeEl, {
+          attr: { 'stroke-dashoffset': 0 },
+          duration: s.dur,
+          ease: 'power2.inOut'
+        });
+
+        // Pen-lift gap after each stroke
+        if(s.gap > 0){
+          heroTl.to({}, { duration: s.gap });
+        }
       });
 
-      if(s.gap > 0){
-        // Natural pen-lift pause (40-50ms)
-        heroTl.to({}, { duration: s.gap });
-      }
+      // After all strokes for this letter: remove mask so crisp plain glyph shows
+      heroTl.call(function(){
+        if(grp) grp.removeAttribute('mask');
+      });
     });
 
-    // Remove mask when finished so final text is 100% crisp and identical to unmasked glyphs
-    heroTl.call(function(){
-      if(sigGroup) sigGroup.removeAttribute('mask');
-    });
+    // ── STEP 4: Stagger the rest of the hero content in after USHSS is fully written ──
+    heroTl.to('.hero-stagger-item', {
+      autoAlpha: 1,
+      y: 0,
+      duration: 0.7,
+      stagger: 0.1,
+      ease: 'power3.out',
+      clearProps: 'transform,will-change'
+    }, '+=0.06');
 
-    // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.5s)
-    heroTl.fromTo('.hero-stagger-item',
-      { opacity: 0, y: 24 },
-      {
-        opacity: 1,
-        y: 0,
-        duration: 0.7,
-        stagger: 0.1,
-        ease: 'power3.out',
-        clearProps: 'transform'
-      },
-      '+=0.04'
-    );
-
-    // Support timestamp seeking & frame capture verification via ?t=<seconds> or ?progress=<val>
-    try {
-      var urlParams = new URLSearchParams(window.location.search);
+    // ── STEP 5: Support ?t= and ?progress= for frame capture / debugging ──
+    if(urlParams){
       var forceTime = urlParams.get('t');
       var forceProgress = urlParams.get('progress');
-      if(forceProgress !== null){
-        var pVal = parseFloat(forceProgress);
-        if(!isNaN(pVal)){
-          heroTl.progress(pVal);
-          heroTl.pause();
-          if(pVal >= 1.0){
-            if(sigGroup) sigGroup.removeAttribute('mask');
-            gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
+      try {
+        if(forceProgress !== null){
+          var pVal = parseFloat(forceProgress);
+          if(!isNaN(pVal)){
+            heroTl.progress(pVal);
+            heroTl.pause();
+          }
+        } else if(forceTime !== null){
+          var tVal = parseFloat(forceTime);
+          if(!isNaN(tVal)){
+            heroTl.seek(tVal);
+            heroTl.pause();
           }
         }
-      } else if(forceTime !== null){
-        var tVal = parseFloat(forceTime);
-        if(!isNaN(tVal)){
-          heroTl.seek(tVal);
-          heroTl.pause();
-          if(tVal >= 1.6){
-            if(sigGroup) sigGroup.removeAttribute('mask');
-            gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
-          }
-        }
-      }
-    } catch(e){}
+      } catch(e){}
+    }
   }
 
-  // Initialize hero sequence when fonts are loaded or DOM ready + 0.2s
-  if(document.fonts && document.fonts.ready){
-    document.fonts.ready.then(function(){
+  // ── Wait for Serendipity font to load before starting, so glyphs are correct ──
+  // font-display:block ensures the font blocks paint (no FOUC)
+  function startWhenReady(){
+    if(document.fonts && document.fonts.ready){
+      document.fonts.ready.then(function(){
+        initHeroSequence();
+      }).catch(function(){
+        initHeroSequence();
+      });
+    } else {
       initHeroSequence();
-    }).catch(function(){
-      initHeroSequence();
-    });
+    }
+  }
+
+  if(document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', startWhenReady);
   } else {
-    initHeroSequence();
+    startWhenReady();
   }
 
   /* ═══════════════════════════════════════════════════
