@@ -577,10 +577,36 @@ nav.scrolled{
 .hero-particle-wrap {
   width: 100%;
   max-width: min(820px, 58vw);
-  height: clamp(140px, 20vh, 220px);
+  aspect-ratio: 834 / 220;
+  height: auto;
   margin-bottom: clamp(0.6rem, 1.4vh, 1.2rem);
   position: relative;
   display: block;
+}
+
+.hero-signature-svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  display: block;
+}
+
+.sig-letter {
+  font-family: var(--font-signature);
+  font-size: 200px;
+  fill: var(--mist-200);
+  filter: drop-shadow(0 0 12px rgba(78, 174, 192, 0.5)) drop-shadow(0 2px 8px rgba(33, 42, 49, 0.7));
+}
+
+.hero-crisp-text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 0.35s ease-out;
+  pointer-events: none;
+  will-change: opacity;
 }
 
 .hero-fallback-title {
@@ -1961,8 +1987,17 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
       <div class="hero-left-col">
-        <!-- Spatial anchor for Serendipity particle text -->
-        <div class="hero-particle-wrap" id="particle-wrap" aria-hidden="true">
+        <!-- Spatial anchor & crisp SVG text in Serendipity -->
+        <div class="hero-particle-wrap" id="particle-wrap" role="img" aria-label="USHSS">
+          <div class="hero-crisp-text" id="hero-crisp-text" aria-hidden="true">
+            <svg class="hero-signature-svg" viewBox="0 0 834 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <text class="sig-letter" x="0" y="180">U</text>
+              <text class="sig-letter" x="193" y="180">S</text>
+              <text class="sig-letter" x="337" y="180">H</text>
+              <text class="sig-letter" x="538" y="180">S</text>
+              <text class="sig-letter" x="681" y="180">S</text>
+            </svg>
+          </div>
           <div class="hero-fallback-title">USHSS</div>
         </div>
         <noscript>
@@ -3064,6 +3099,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     var canvas = document.getElementById('hero-particle-canvas');
     var anchorWrap = document.getElementById('particle-wrap');
+    var crispText = document.getElementById('hero-crisp-text');
     var heroSection = document.getElementById('home');
     if(!canvas || !anchorWrap || !heroSection) return;
 
@@ -3073,135 +3109,15 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     // Check prefers-reduced-motion
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     if(prefersReduced){
-      // Reveal items immediately and fallback static title
-      var fallback = anchorWrap.querySelector('.hero-fallback-title');
-      if(fallback) fallback.style.opacity = '1';
+      if(crispText) crispText.style.opacity = '1';
       document.querySelectorAll('.hero-stagger-item').forEach(function(el){
         el.classList.add('revealed');
       });
       return;
     }
 
-    var WORDS = ["ideas", "society", "thought", "culture", "English", "Economics", "critical"];
-    var COLORS = ["#D3D9D4", "#5FB8CC"]; // 80% mist-200, 20% teal-300
-    var FONT_SIZES = [9, 10.5, 12];
-    var ANGLES = [-10, -5, 0, 5, 10]; // degrees
-
-    // ── Build Atlas ──
-    var atlasEntries = [];
-    var atlasCanvas = document.createElement('canvas');
-    atlasCanvas.width = 1024;
-    atlasCanvas.height = 1024;
-    var actx = atlasCanvas.getContext('2d');
-
-    var curAx = 2;
-    var curAy = 2;
-    var rowMaxH = 0;
-
-    // 1. Word sprites
-    for(var cIdx = 0; cIdx < COLORS.length; cIdx++){
-      var col = COLORS[cIdx];
-      for(var wIdx = 0; wIdx < WORDS.length; wIdx++){
-        var word = WORDS[wIdx];
-        for(var sIdx = 0; sIdx < FONT_SIZES.length; sIdx++){
-          var fsz = FONT_SIZES[sIdx];
-          for(var aIdx = 0; aIdx < ANGLES.length; aIdx++){
-            var angDeg = ANGLES[aIdx];
-            var angRad = angDeg * Math.PI / 180;
-
-            actx.font = fsz + 'px "Times New Roman", serif';
-            var tm = actx.measureText(word);
-            var tw = Math.ceil(tm.width) + 4;
-            var th = Math.ceil(fsz * 1.3) + 4;
-
-            // Bounding box with rotation
-            var cosA = Math.abs(Math.cos(angRad));
-            var sinA = Math.abs(Math.sin(angRad));
-            var bw = Math.ceil(tw * cosA + th * sinA) + 4;
-            var bh = Math.ceil(tw * sinA + th * cosA) + 4;
-
-            if(curAx + bw > 1020){
-              curAx = 2;
-              curAy += rowMaxH + 4;
-              rowMaxH = 0;
-            }
-            if(curAy + bh > 1020){
-              console.warn('Atlas overflow');
-              break;
-            }
-
-            actx.save();
-            actx.translate(curAx + bw / 2, curAy + bh / 2);
-            actx.rotate(angRad);
-            actx.font = fsz + 'px "Times New Roman", serif';
-            actx.fillStyle = col;
-            actx.textAlign = 'center';
-            actx.textBaseline = 'middle';
-            actx.fillText(word, 0, 0);
-            actx.restore();
-
-            atlasEntries.push({
-              sx: curAx,
-              sy: curAy,
-              sw: bw,
-              sh: bh,
-              cx: bw / 2,
-              cy: bh / 2,
-              isBokeh: 0
-            });
-
-            curAx += bw + 4;
-            if(bh > rowMaxH) rowMaxH = bh;
-          }
-        }
-      }
-    }
-
-    // 2. Bokeh soft circles in atlas
-    var BOKEH_SIZES = [8, 14, 20];
-    var BOKEH_COLORS = ['rgba(95, 184, 204, 0.25)', 'rgba(116, 141, 146, 0.2)'];
-    var bokehAtlasIds = [];
-
-    for(var bcIdx = 0; bcIdx < BOKEH_COLORS.length; bcIdx++){
-      var bcol = BOKEH_COLORS[bcIdx];
-      for(var bsIdx = 0; bsIdx < BOKEH_SIZES.length; bsIdx++){
-        var r = BOKEH_SIZES[bsIdx];
-        var d = r * 2 + 4;
-
-        if(curAx + d > 1020){
-          curAx = 2;
-          curAy += rowMaxH + 4;
-          rowMaxH = 0;
-        }
-
-        var grad = actx.createRadialGradient(curAx + r + 2, curAy + r + 2, 0, curAx + r + 2, curAy + r + 2, r);
-        grad.addColorStop(0, bcol);
-        grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-        actx.fillStyle = grad;
-        actx.beginPath();
-        actx.arc(curAx + r + 2, curAy + r + 2, r, 0, Math.PI * 2);
-        actx.fill();
-
-        var bId = atlasEntries.length;
-        atlasEntries.push({
-          sx: curAx,
-          sy: curAy,
-          sw: d,
-          sh: d,
-          cx: d / 2,
-          cy: d / 2,
-          isBokeh: 1
-        });
-        bokehAtlasIds.push(bId);
-
-        curAx += d + 4;
-        if(d > rowMaxH) rowMaxH = d;
-      }
-    }
-
-    // ── Particle arrays ──
-    var MAX_PARTICLES = 3600;
+    // ── Particle Arrays (Zero allocations in loop) ──
+    var MAX_PARTICLES = 6500;
     var pX = new Float32Array(MAX_PARTICLES);
     var pY = new Float32Array(MAX_PARTICLES);
     var pVx = new Float32Array(MAX_PARTICLES);
@@ -3209,12 +3125,9 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     var pTx = new Float32Array(MAX_PARTICLES);
     var pTy = new Float32Array(MAX_PARTICLES);
     var pDelay = new Float32Array(MAX_PARTICLES);
+    var pRadius = new Float32Array(MAX_PARTICLES);
+    var pColor = new Uint8Array(MAX_PARTICLES); // 0: #D3D9D4 (80%), 1: #5FB8CC (20%)
     var pAlpha = new Float32Array(MAX_PARTICLES);
-    var pTargetAlpha = new Float32Array(MAX_PARTICLES);
-    var pTwinkleSpeed = new Float32Array(MAX_PARTICLES);
-    var pTwinklePhase = new Float32Array(MAX_PARTICLES);
-    var pAtlasId = new Uint16Array(MAX_PARTICLES);
-    var pIsBokeh = new Uint8Array(MAX_PARTICLES);
     var particleCount = 0;
 
     var width = 0;
@@ -3225,12 +3138,14 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     var mouseX = -9999;
     var mouseY = -9999;
     var mouseActive = false;
+    var lastMouseMoveTime = 0;
 
     function handlePointer(clientX, clientY){
       var rect = heroSection.getBoundingClientRect();
       mouseX = clientX - rect.left;
       mouseY = clientY - rect.top;
       mouseActive = true;
+      lastMouseMoveTime = performance.now();
     }
 
     window.addEventListener('pointermove', function(e){
@@ -3255,63 +3170,119 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       mouseActive = false;
     });
 
-    // ── Sample target points from offscreen canvas ──
+    // ── Pre-rendered tiny dot sprites ──
+    // 2 colors x 8 radius bins
+    var dotSprites = [];
+    (function createDotSprites(){
+      var cols = ['#D3D9D4', '#5FB8CC'];
+      for(var c = 0; c < 2; c++){
+        dotSprites[c] = [];
+        for(var rIdx = 0; rIdx < 8; rIdx++){
+          var r = 0.6 + (rIdx / 7) * 0.7; // 0.6 to 1.3px
+          var size = Math.ceil(r * 2) + 2;
+          var sCanvas = document.createElement('canvas');
+          sCanvas.width = size;
+          sCanvas.height = size;
+          var sctx = sCanvas.getContext('2d');
+          sctx.fillStyle = cols[c];
+          sctx.beginPath();
+          sctx.arc(size / 2, size / 2, r, 0, Math.PI * 2);
+          sctx.fill();
+          dotSprites[c][rIdx] = { canvas: sCanvas, half: size / 2 };
+        }
+      }
+    })();
+
+    // ── Word Bounding Box for interaction & sampling ──
+    var wordBox = { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
+
+    // ── Sample Target Points from clean SVG metrics ──
     function sampleTargetPoints(){
       var isMobile = window.innerWidth <= 768;
-      var cap = isMobile ? 1800 : 3500;
+      var cap = isMobile ? 2500 : 6000;
+      var gridStep = isMobile ? 5 : 4;
 
       var heroRect = heroSection.getBoundingClientRect();
       var anchorRect = anchorWrap.getBoundingClientRect();
 
       var leftOffset = anchorRect.left - heroRect.left;
       var topOffset = anchorRect.top - heroRect.top;
-      var targetWidth = anchorRect.width || (isMobile ? width * 0.8 : Math.min(width * 0.52, 620));
+      var wrapW = anchorRect.width;
+      var wrapH = anchorRect.height;
 
-      // Font size to fit target width
-      // USHSS in Serendipity: aspect ratio width/height is ~3.8
-      var fontSize = Math.round(targetWidth / 3.4);
-      if(isMobile) fontSize = Math.max(fontSize, 65);
-      else fontSize = Math.max(fontSize, 110);
+      // Update wordBox
+      wordBox.left = leftOffset;
+      wordBox.top = topOffset;
+      wordBox.right = leftOffset + wrapW;
+      wordBox.bottom = topOffset + wrapH;
+      wordBox.width = wrapW;
+      wordBox.height = wrapH;
 
+      // Offscreen canvas matching the wrap
       var offCanvas = document.createElement('canvas');
-      offCanvas.width = Math.ceil(width);
-      offCanvas.height = Math.ceil(height);
+      offCanvas.width = Math.ceil(wrapW);
+      offCanvas.height = Math.ceil(wrapH);
       var octx = offCanvas.getContext('2d', { willReadFrequently: true });
       if(!octx) return;
 
-      octx.font = 'bold ' + fontSize + 'px Serendipity, "Protest Revolution", Georgia, serif';
+      // Font size to match 834x220 aspect ratio:
+      // fontSize = 200 * (wrapW / 834)
+      var scale = wrapW / 834;
+      var fontSize = 200 * scale;
+      var baselineY = 180 * scale;
+
+      octx.font = fontSize + 'px Serendipity, "Protest Revolution", Georgia, serif';
       octx.fillStyle = '#FFFFFF';
-      octx.textBaseline = 'top';
-      octx.fillText('USHSS', leftOffset, topOffset);
+      octx.textBaseline = 'alphabetic';
 
-      var sampleBoxW = Math.min(width, Math.ceil(leftOffset + targetWidth * 1.15));
-      var sampleBoxH = Math.min(height, Math.ceil(topOffset + fontSize * 1.5));
-      var sampleBoxX = Math.max(0, Math.floor(leftOffset - 10));
-      var sampleBoxY = Math.max(0, Math.floor(topOffset - 10));
-      var imgW = sampleBoxW - sampleBoxX;
-      var imgH = sampleBoxH - sampleBoxY;
+      // Draw individual letters at exact SVG x positions
+      var glyphs = [
+        { char: 'U', x: 0 },
+        { char: 'S', x: 193 },
+        { char: 'H', x: 337 },
+        { char: 'S', x: 538 },
+        { char: 'S', x: 681 }
+      ];
 
+      for(var g = 0; g < glyphs.length; g++){
+        octx.fillText(glyphs[g].char, glyphs[g].x * scale, baselineY);
+      }
+
+      var imgW = offCanvas.width;
+      var imgH = offCanvas.height;
       if(imgW <= 0 || imgH <= 0) return;
 
-      var imgData = octx.getImageData(sampleBoxX, sampleBoxY, imgW, imgH);
+      var imgData = octx.getImageData(0, 0, imgW, imgH);
       var data = imgData.data;
 
-      var gridStep = isMobile ? 6 : 5;
-      var rawPoints = [];
+      // Gutter clamp
+      var gutterStyle = getComputedStyle(document.documentElement).getPropertyValue('--page-gutter');
+      var gutter = parseFloat(gutterStyle) || 40;
+      var minAllowedX = gutter;
+      var maxAllowedX = width - gutter;
 
+      var rawPoints = [];
       for(var y = 0; y < imgH; y += gridStep){
         for(var x = 0; x < imgW; x += gridStep){
           var idx = (y * imgW + x) * 4;
-          if(data[idx + 3] > 120){
+          if(data[idx + 3] > 160){
+            var targetX = leftOffset + x + (Math.random() - 0.5) * 1.0;
+            var targetY = topOffset + y + (Math.random() - 0.5) * 1.0;
+
+            // Strict clamp to prevent edge clipping
+            if(targetX < minAllowedX) targetX = minAllowedX;
+            if(targetX > maxAllowedX) targetX = maxAllowedX;
+
             rawPoints.push({
-              x: sampleBoxX + x + (Math.random() - 0.5) * 1.5,
-              y: sampleBoxY + y + (Math.random() - 0.5) * 1.5
+              tx: targetX,
+              ty: targetY,
+              localX: x
             });
           }
         }
       }
 
-      // If count > cap, dynamically increase step / decimate
+      // If count > cap, downsample
       if(rawPoints.length > cap){
         var ratio = cap / rawPoints.length;
         var filtered = [];
@@ -3321,7 +3292,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         rawPoints = filtered;
       }
 
-      // Shuffle raw points
+      // Shuffle
       for(var i = rawPoints.length - 1; i > 0; i--){
         var j = Math.floor(Math.random() * (i + 1));
         var temp = rawPoints[i];
@@ -3329,50 +3300,29 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         rawPoints[j] = temp;
       }
 
-      var numWordAtlas = atlasEntries.length - bokehAtlasIds.length;
       particleCount = Math.min(rawPoints.length, MAX_PARTICLES);
-
-      var minX = 999999;
-      var maxX = -999999;
-      for(var i = 0; i < particleCount; i++){
-        if(rawPoints[i].x < minX) minX = rawPoints[i].x;
-        if(rawPoints[i].x > maxX) maxX = rawPoints[i].x;
-      }
-      var spanX = (maxX - minX) || 1;
 
       for(var i = 0; i < particleCount; i++){
         var pt = rawPoints[i];
-        pTx[i] = pt.x;
-        pTy[i] = pt.y;
+        pTx[i] = pt.tx;
+        pTy[i] = pt.ty;
 
-        // Initial scatter position: dispersed around hero
-        var scatterAngle = Math.random() * Math.PI * 2;
-        var scatterDist = 150 + Math.random() * (width * 0.55);
-        pX[i] = pt.x + Math.cos(scatterAngle) * scatterDist;
-        pY[i] = pt.y + Math.sin(scatterAngle) * scatterDist;
-        pVx[i] = (Math.random() - 0.5) * 40;
-        pVy[i] = (Math.random() - 0.5) * 40;
+        // Scattered phase at t=0: tiny dots across the FULL SCREEN, calm and sparse
+        pX[i] = Math.random() * width;
+        pY[i] = Math.random() * height;
+        pVx[i] = (Math.random() - 0.5) * 12;
+        pVy[i] = (Math.random() - 0.5) * 12;
 
-        // Assemble delay: strictly left-to-right cascade (0.0 to 0.7s)
-        var normX = (pt.x - minX) / spanX;
-        pDelay[i] = normX * 0.55 + Math.random() * 0.12;
+        // Rush delay: strictly left-to-right (U -> S -> H -> S -> S)
+        var normX = Math.max(0, Math.min(1, pt.localX / imgW));
+        pDelay[i] = normX * 0.65 + Math.random() * 0.10; // 0.0s to ~0.75s
 
-        pAlpha[i] = 0.05;
-        pTargetAlpha[i] = 0.85 + Math.random() * 0.15;
-        pTwinkleSpeed[i] = 1.5 + Math.random() * 2.5;
-        pTwinklePhase[i] = Math.random() * Math.PI * 2;
-
-        // 88% word particles, 12% bokeh
-        if(Math.random() < 0.12 && bokehAtlasIds.length > 0){
-          var bIdx = bokehAtlasIds[Math.floor(Math.random() * bokehAtlasIds.length)];
-          pAtlasId[i] = bIdx;
-          pIsBokeh[i] = 1;
-        } else {
-          // Color distribution: 80% color 0 (#D3D9D4), 20% color 1 (#5FB8CC)
-          var wordSpriteId = Math.floor(Math.random() * numWordAtlas);
-          pAtlasId[i] = wordSpriteId;
-          pIsBokeh[i] = 0;
-        }
+        // Radius: 0.6 to 1.3px
+        pRadius[i] = 0.6 + Math.random() * 0.7;
+        // Color: 80% mist-200 (0), 20% teal-300 (1)
+        pColor[i] = (Math.random() < 0.20) ? 1 : 0;
+        // Alpha: 0.7 to 1.0
+        pAlpha[i] = 0.7 + Math.random() * 0.3;
       }
     }
 
@@ -3396,31 +3346,47 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       resizeTimer = setTimeout(resize, 200);
     });
 
-    // Check for ?t= or ?progress= in URL
+    // Check for ?t= or ?test_mouse=1 in URL
     var urlParams = null;
     try { urlParams = new URLSearchParams(window.location.search); } catch(e){}
     var forceT = urlParams ? urlParams.get('t') : null;
+    var testMouse = urlParams && urlParams.get('test_mouse') === '1';
 
     resize();
 
-    // ── Animation Loop ──
-    var startTime = performance.now();
-    var lastTime = startTime;
+    // ── Hybrid State Management ──
+    // Mode: 'DOTS' (canvas dots visible, crisp text 0)
+    //       'CRISP' (crisp text 1, canvas dots 0)
+    var currentMode = 'DOTS';
+    var canvasOpacity = 1.0;
+    var crispOpacity = 0.0;
+    var hasSettledOnce = false;
     var textRevealed = false;
     var isRunning = true;
 
-    // Repulsion radius
-    var repRadius = (window.innerWidth <= 768) ? 75 : 120;
+    var startTime = performance.now();
+    var lastTime = startTime;
+
+    // Repulsion parameters
+    var repRadius = (window.innerWidth <= 768) ? 65 : 100;
     var repRadiusSq = repRadius * repRadius;
 
     function render(now){
       if(!isRunning) return;
 
-      var dt = Math.min((now - lastTime) / 1000, 0.05);
+      var dt = (now <= lastTime) ? 0.016 : Math.min((now - lastTime) / 1000, 0.05);
       lastTime = now;
-      var elapsed = (now - startTime) / 1000;
+      var elapsed = Math.max(0, (now - startTime) / 1000);
 
-      // Check text reveal after formation (~1.25s)
+      // Test mouse flag for headless capture
+      if(testMouse && elapsed >= 1.0){
+        mouseX = wordBox.left + wordBox.width * 0.45;
+        mouseY = wordBox.top + wordBox.height * 0.50;
+        mouseActive = true;
+        lastMouseMoveTime = now;
+      }
+
+      // ── Step 1: Reveal hero text below after initial convergence (~1.25s) ──
       if(!textRevealed && elapsed >= 1.25){
         textRevealed = true;
         var staggerItems = document.querySelectorAll('.hero-stagger-item');
@@ -3435,45 +3401,45 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         });
       }
 
-      ctx.save();
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-
-      // Spring constant: higher initially for quick snap, softer later
-      var springK = (elapsed < 1.1) ? 55 : 36;
-      var damping = Math.pow(0.82, dt * 60);
+      // ── Step 2: Physics update & compute average distance to target ──
+      var totalDist = 0;
+      var springK = (elapsed < 1.1) ? 58 : 42;
+      var damping = Math.pow(0.80, dt * 60);
 
       var hasMouse = mouseActive && mouseX > -1000 && mouseY > -1000;
 
-      // Pass 1: Word particles (source-over)
-      ctx.globalCompositeOperation = 'source-over';
+      // Check distance of mouse to word bounding box
+      var mouseNearWord = false;
+      if(hasMouse){
+        var nearDistX = Math.max(0, Math.max(wordBox.left - mouseX, mouseX - wordBox.right));
+        var nearDistY = Math.max(0, Math.max(wordBox.top - mouseY, mouseY - wordBox.bottom));
+        var boxDistSq = nearDistX * nearDistX + nearDistY * nearDistY;
+        if(boxDistSq < 60 * 60){ // within 60px of bounding box
+          mouseNearWord = true;
+        }
+      }
 
       for(var i = 0; i < particleCount; i++){
-        if(pIsBokeh[i] === 1) continue;
-
         var curDelay = pDelay[i];
         if(elapsed < curDelay){
-          // Float slowly before rushing
-          pX[i] += pVx[i] * dt * 0.3;
-          pY[i] += pVy[i] * dt * 0.3;
-          pAlpha[i] = 0.08;
+          // t < delay: gently drift in scattered state
+          pX[i] += pVx[i] * dt * 0.4;
+          pY[i] += pVy[i] * dt * 0.4;
+          // Wrap around viewport edges during initial drift
+          if(pX[i] < 0) pX[i] += width;
+          if(pX[i] > width) pX[i] -= width;
+          if(pY[i] < 0) pY[i] += height;
+          if(pY[i] > height) pY[i] -= height;
+          totalDist += 100;
         } else {
-          // Rush towards target
-          var timeSinceStart = elapsed - curDelay;
-          var rushProgress = Math.min(timeSinceStart / 0.45, 1.0);
-
+          // Rush to target
           var tx = pTx[i];
           var ty = pTy[i];
 
-          // Small subtle idle jitter after formed
-          if(rushProgress >= 1.0){
-            var jPhase = elapsed * 2.0 + i;
-            tx += Math.sin(jPhase) * 0.45;
-            ty += Math.cos(jPhase * 0.8) * 0.45;
-          }
-
           var dx = tx - pX[i];
           var dy = ty - pY[i];
+          var dToTarget = Math.sqrt(dx * dx + dy * dy);
+          totalDist += dToTarget;
 
           var ax = dx * springK;
           var ay = dy * springK;
@@ -3485,7 +3451,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
             var distSq = mdx * mdx + mdy * mdy;
             if(distSq < repRadiusSq && distSq > 0.1){
               var dist = Math.sqrt(distSq);
-              var force = (1.0 - dist / repRadius) * 2800;
+              var force = (1.0 - dist / repRadius) * 2600;
               ax += (mdx / dist) * force;
               ay += (mdy / dist) * force;
             }
@@ -3496,73 +3462,73 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
           pX[i] += pVx[i] * dt;
           pY[i] += pVy[i] * dt;
-
-          // Alpha ramp
-          if(pAlpha[i] < pTargetAlpha[i]){
-            pAlpha[i] = Math.min(pAlpha[i] + dt * 2.5, pTargetAlpha[i]);
-          }
-        }
-
-        // Draw sprite
-        var ent = atlasEntries[pAtlasId[i]];
-        if(ent){
-          var alpha = pAlpha[i];
-          if(elapsed > 1.2){
-            // Subtle slow twinkle
-            alpha += Math.sin(elapsed * pTwinkleSpeed[i] + pTwinklePhase[i]) * 0.08;
-            alpha = Math.max(0.15, Math.min(alpha, 1.0));
-          }
-          ctx.globalAlpha = alpha;
-          ctx.drawImage(atlasCanvas, ent.sx, ent.sy, ent.sw, ent.sh,
-                        pX[i] - ent.cx, pY[i] - ent.cy, ent.sw, ent.sh);
         }
       }
 
-      // Pass 2: Bokeh soft glowing specks (screen composite)
-      ctx.globalCompositeOperation = 'screen';
+      var avgDist = (particleCount > 0) ? (totalDist / particleCount) : 999;
 
-      for(var i = 0; i < particleCount; i++){
-        if(pIsBokeh[i] === 0) continue;
+      // ── Step 3: Hybrid Crossfade State Machine ──
+      // When elapsed >= 1.25s and avgDist < 1.0px, transition to CRISP
+      if(!hasSettledOnce && elapsed >= 1.25 && avgDist < 1.0){
+        hasSettledOnce = true;
+        currentMode = 'CRISP';
+      }
 
-        var curDelay = pDelay[i];
-        if(elapsed >= curDelay){
-          var tx = pTx[i];
-          var ty = pTy[i];
-
-          var dx = tx - pX[i];
-          var dy = ty - pY[i];
-
-          var ax = dx * (springK * 0.7);
-          var ay = dy * (springK * 0.7);
-
-          if(hasMouse){
-            var mdx = pX[i] - mouseX;
-            var mdy = pY[i] - mouseY;
-            var distSq = mdx * mdx + mdy * mdy;
-            if(distSq < repRadiusSq && distSq > 0.1){
-              var dist = Math.sqrt(distSq);
-              var force = (1.0 - dist / repRadius) * 2200;
-              ax += (mdx / dist) * force;
-              ay += (mdy / dist) * force;
-            }
-          }
-
-          pVx[i] = (pVx[i] + ax * dt) * damping;
-          pVy[i] = (pVy[i] + ay * dt) * damping;
-
-          pX[i] += pVx[i] * dt;
-          pY[i] += pVy[i] * dt;
-
-          if(pAlpha[i] < pTargetAlpha[i]){
-            pAlpha[i] = Math.min(pAlpha[i] + dt * 1.5, pTargetAlpha[i]);
+      // Mouse triggers immediate switch to DOTS if within 60px
+      if(mouseNearWord){
+        if(currentMode === 'CRISP'){
+          currentMode = 'DOTS';
+          // Snap particles precisely onto targets before physics push starts
+          for(var i = 0; i < particleCount; i++){
+            pX[i] = pTx[i];
+            pY[i] = pTy[i];
+            pVx[i] = 0;
+            pVy[i] = 0;
           }
         }
+      } else if(hasSettledOnce && currentMode === 'DOTS'){
+        // If mouse away for > 0.4s and particles settled (< 1px avgDist), switch back to CRISP
+        var timeSinceMouse = (now - lastMouseMoveTime) / 1000;
+        if(timeSinceMouse > 0.4 && avgDist < 1.0){
+          currentMode = 'CRISP';
+        }
+      }
 
-        var ent = atlasEntries[pAtlasId[i]];
-        if(ent){
-          ctx.globalAlpha = pAlpha[i] * 0.7;
-          ctx.drawImage(atlasCanvas, ent.sx, ent.sy, ent.sw, ent.sh,
-                        pX[i] - ent.cx, pY[i] - ent.cy, ent.sw, ent.sh);
+      // Animate crossfade opacities
+      if(currentMode === 'CRISP'){
+        // Crossfade over 0.35s
+        var fadeRate = dt / 0.35;
+        crispOpacity = Math.min(1.0, Math.max(0.0, crispOpacity + fadeRate));
+        canvasOpacity = Math.min(1.0, Math.max(0.0, canvasOpacity - fadeRate));
+      } else {
+        // Fast switch to dots over 0.12s
+        var fadeRate = dt / 0.12;
+        crispOpacity = Math.min(1.0, Math.max(0.0, crispOpacity - fadeRate));
+        canvasOpacity = Math.min(1.0, Math.max(0.0, canvasOpacity + fadeRate));
+      }
+
+      if(crispText){
+        crispText.style.opacity = crispOpacity.toFixed(3);
+      }
+
+      // ── Step 4: Draw Canvas Dots ──
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
+
+      if(canvasOpacity > 0.005){
+        ctx.globalAlpha = canvasOpacity;
+        ctx.globalCompositeOperation = 'source-over';
+
+        for(var i = 0; i < particleCount; i++){
+          var colIdx = pColor[i];
+          var rVal = pRadius[i];
+          // Map rVal (0.6..1.3) to 0..7 bin
+          var rIdx = Math.max(0, Math.min(7, Math.round(((rVal - 0.6) / 0.7) * 7)));
+          var sprite = dotSprites[colIdx][rIdx];
+          if(sprite){
+            ctx.drawImage(sprite.canvas, pX[i] - sprite.half, pY[i] - sprite.half);
+          }
         }
       }
 
@@ -3577,20 +3543,17 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     if(forceT !== null){
       var targetT = parseFloat(forceT);
       if(!isNaN(targetT) && targetT >= 0){
-        // Simulate forward to targetT in 1/60s steps
         var step = 1 / 60;
         var simElapsed = 0;
-        while(simElapsed < targetT){
-          simElapsed += step;
+        while(simElapsed <= targetT){
           render(startTime + simElapsed * 1000);
+          simElapsed += step;
         }
-        // Draw one final frame at target time
-        render(startTime + targetT * 1000);
-        return; // Pause simulation at target frame
+        isRunning = false; // Halt RAF so headless Chrome captures exact frozen frame
+        return;
       }
     }
 
-    // Pause when offscreen or tab hidden
     document.addEventListener('visibilitychange', function(){
       if(document.hidden){
         isRunning = false;
@@ -3605,8 +3568,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     requestAnimationFrame(render);
   }
-
-  // ── Wait for Serendipity font before initializing particle canvas ──
   function startHeroSystemWhenReady(){
     if(document.fonts && document.fonts.ready){
       document.fonts.ready.then(function(){
