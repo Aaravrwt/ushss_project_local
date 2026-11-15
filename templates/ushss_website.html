@@ -53,6 +53,13 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:ital,wght@0,200;0,300;0,400;0,500;1,200;1,300;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=DM+Sans:wght@300;400;500;600&family=Protest+Revolution&family=Abril+Fatface&display=swap"/>
 <style>
 @font-face {
+  font-family: 'Serendipity';
+  src: url('/static/fonts/serendipity.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
   font-family: 'Protest Revolution';
   src: url('/static/fonts/ProtestRevolution-Latin.woff2') format('woff2');
   font-weight: normal;
@@ -90,7 +97,7 @@
   /* ── HERO TUNING & TYPOGRAPHY SYSTEM TOKENS ── */
   --hero-blur: 7px;
   --page-gutter: 42px;
-  --font-signature: "Protest Revolution", "Abril Fatface", "Playfair Display", serif;
+  --font-signature: "Serendipity", "Protest Revolution", "Playfair Display", serif;
   --font-hero: "Times New Roman", Times, "Liberation Serif", serif;
 
   /* ── STRICT 5-COLOUR SOURCE OF TRUTH (Physical Dye-in-Water Model) ── */
@@ -463,14 +470,14 @@ nav.scrolled{
   overflow: hidden;
   z-index: 1;
   pointer-events: none;
-  transform-origin: center center;
+  transform: translateZ(0);
   will-change: transform;
 }
 .hero-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform-origin: center center;
+  transform: translateZ(0);
   animation: heroKenBurns 20s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -487,11 +494,8 @@ nav.scrolled{
   height: 108%;
   z-index: 2;
   pointer-events: none;
-  backdrop-filter: blur(var(--hero-blur, 7px)) saturate(1.08);
-  -webkit-backdrop-filter: blur(var(--hero-blur, 7px)) saturate(1.08);
   mask-image: radial-gradient(circle at 62% 40%, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,1) 100%);
   -webkit-mask-image: radial-gradient(circle at 62% 40%, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,1) 100%);
-  will-change: filter, backdrop-filter;
 }
 
 /* Layer 2: Duotone Dye Overlay, Left Soft Scrim & Bottom Vignette */
@@ -587,11 +591,10 @@ nav.scrolled{
   stroke-dashoffset: 1;
 }
 
-/* Staggered items initial hidden state */
 .hero-stagger-item {
   opacity: 0;
-  transform: translateY(18px);
-  will-change: opacity, transform;
+  transform: translate3d(0, 24px, 0);
+  will-change: transform, opacity;
 }
 
 /* Eyebrow Kicker */
@@ -661,6 +664,9 @@ nav.scrolled{
   gap: 16px;
   flex-wrap: wrap;
   margin-bottom: 0.5rem;
+}
+.hero-btn-item {
+  display: inline-flex;
 }
 .hero-actions .btn-gold,
 .hero-actions .btn-outline {
@@ -1916,7 +1922,7 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
 
 <!-- HERO (Full-Bleed Soft-Focus Video, Left Signature & Editorial Content) -->
 <section class="hero hero-editorial" id="home">
-  <!-- Layer 0 & 1: Video with Soft-Focus Lens Blur & Ken Burns -->
+  <!-- Layer 0 & 1: Clean Pre-blurred Video with Ken Burns (No Live CSS Filter Blur) -->
   <div class="hero-video-wrap" aria-hidden="true">
     <video
       id="hero-video"
@@ -1927,6 +1933,7 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
       loop
       playsinline
       preload="metadata">
+      <source src="/static/images/hero-loop-clean.mp4" type="video/mp4">
       <source src="/static/images/Video-42144.mp4" type="video/mp4">
     </video>
     <div class="hero-blur-layer"></div>
@@ -1941,29 +1948,45 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
       <div class="hero-left-col">
-        <!-- Handwritten Signature in Protest Revolution (All-Caps USHSS with Centerline Mask Reveal) -->
+        <!-- Handwritten Signature in Serendipity (All-Caps USHSS with Centerline Mask Reveal) -->
         <div class="hero-signature-wrap" id="signature-wrap" role="img" aria-label="USHSS">
           <svg class="hero-signature-svg" id="hero-signature-svg" viewBox="0 0 540 160" fill="none" xmlns="http://www.w3.org/2000/svg">
             <defs>
               <mask id="write-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="540" height="160">
                 <!-- Centerline reveal strokes in white (strictly sequential: U -> S -> H1,H2,H3 -> S -> S) -->
-                <path id="m-u" class="mask-path" d="M 34 22 L 34 98 C 34 135 70 135 70 98 L 70 22" />
-                <path id="m-s1" class="mask-path" d="M 168 44 C 165 20 128 18 128 46 C 128 76 166 80 166 104 C 166 134 126 134 122 108" />
-                <path id="m-h1" class="mask-path" d="M 230 22 L 230 130" />
-                <path id="m-h2" class="mask-path" d="M 264 22 L 264 130" />
-                <path id="m-h3" class="mask-path" d="M 226 78 L 268 78" />
-                <path id="m-s2" class="mask-path" d="M 373 44 C 370 20 333 18 333 46 C 333 76 371 80 371 104 C 371 134 331 134 327 108" />
-                <path id="m-s3" class="mask-path" d="M 468 44 C 465 20 428 18 428 46 C 428 76 466 80 466 104 C 466 134 426 134 422 108" />
+                <!-- U: top of left stem, down, around curve, up right stem -->
+                <path id="m-u" class="mask-path" d="M 38 38 L 38 98 C 38 138 108 138 108 98 L 108 38" />
+                <!-- S1: top terminal, curve through spine, bottom terminal -->
+                <path id="m-s1" class="mask-path" d="M 178 50 C 176 34 135 32 135 56 C 135 86 186 90 186 116 C 186 142 134 142 128 122" />
+                <!-- H: left vertical top to bottom, right vertical top to bottom, crossbar left to right -->
+                <path id="m-h1" class="mask-path" d="M 232 34 L 232 138" />
+                <path id="m-h2" class="mask-path" d="M 302 34 L 302 138" />
+                <path id="m-h3" class="mask-path" d="M 230 85 L 304 85" />
+                <!-- S2 -->
+                <path id="m-s2" class="mask-path" d="M 383 50 C 381 34 340 32 340 56 C 340 86 391 90 391 116 C 391 142 339 142 333 122" />
+                <!-- S3 -->
+                <path id="m-s3" class="mask-path" d="M 478 50 C 476 34 435 32 435 56 C 435 86 486 90 486 116 C 486 142 434 142 428 122" />
               </mask>
             </defs>
 
-            <!-- Real font glyphs revealed by write-mask -->
+            <!-- Real Serendipity font glyphs revealed by write-mask -->
             <g id="sig-text-group" mask="url(#write-mask)">
               <text id="letter-u" class="sig-letter" x="20" y="115">U</text>
-              <text id="letter-s1" class="sig-letter" x="115" y="115">S</text>
+              <text id="letter-s1" class="sig-letter" x="120" y="115">S</text>
               <text id="letter-h" class="sig-letter" x="215" y="115">H</text>
-              <text id="letter-s2" class="sig-letter" x="320" y="115">S</text>
-              <text id="letter-s3" class="sig-letter" x="415" y="115">S</text>
+              <text id="letter-s2" class="sig-letter" x="325" y="115">S</text>
+              <text id="letter-s3" class="sig-letter" x="420" y="115">S</text>
+            </g>
+
+            <!-- Debug Centerline Overlay (?debug=1) -->
+            <g id="sig-debug-group" style="display:none;" opacity="0.8">
+              <path class="debug-stroke-path" d="M 38 38 L 38 98 C 38 138 108 138 108 98 L 108 38" />
+              <path class="debug-stroke-path" d="M 178 50 C 176 34 135 32 135 56 C 135 86 186 90 186 116 C 186 142 134 142 128 122" />
+              <path class="debug-stroke-path" d="M 232 34 L 232 138" />
+              <path class="debug-stroke-path" d="M 302 34 L 302 138" />
+              <path class="debug-stroke-path" d="M 230 85 L 304 85" />
+              <path class="debug-stroke-path" d="M 383 50 C 381 34 340 32 340 56 C 340 86 391 90 391 116 C 391 142 339 142 333 122" />
+              <path class="debug-stroke-path" d="M 478 50 C 476 34 435 32 435 56 C 435 86 486 90 486 116 C 486 142 434 142 428 122" />
             </g>
           </svg>
         </div>
@@ -1984,30 +2007,34 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
         </div>
 
         <!-- Action Buttons (Times New Roman, Liquid-Glass) -->
-        <div class="hero-stagger-item hero-actions">
-          <a href="#programmes" class="btn-gold">Explore Programmes</a>
-          <a href="#about" class="btn-outline">Learn More</a>
+        <div class="hero-actions">
+          <div class="hero-stagger-item hero-btn-item">
+            <a href="#programmes" class="btn-gold">Explore Programmes</a>
+          </div>
+          <div class="hero-stagger-item hero-btn-item">
+            <a href="#about" class="btn-outline">Learn More</a>
+          </div>
         </div>
       </div>
     </div>
 
     <!-- Bottom Bar: Stats Row & Centered Scroll Cue -->
     <div class="hero-bottom-bar">
-      <div class="hero-stagger-item hero-stats-wrap">
+      <div class="hero-stats-wrap">
         <div class="hero-stats-chips" aria-label="Key school facts">
-          <div class="stat-chip">
+          <div class="hero-stagger-item stat-chip">
             <span class="stat-chip-num">02</span>
             <span class="stat-chip-lbl">Core Disciplines</span>
           </div>
-          <div class="stat-chip">
+          <div class="hero-stagger-item stat-chip">
             <span class="stat-chip-num">MA</span>
             <span class="stat-chip-lbl">English &amp; Economics</span>
           </div>
-          <div class="stat-chip">
+          <div class="hero-stagger-item stat-chip">
             <span class="stat-chip-num">PhD</span>
             <span class="stat-chip-lbl">Research Pathway</span>
           </div>
-          <div class="stat-chip">
+          <div class="hero-stagger-item stat-chip">
             <span class="stat-chip-num">1998</span>
             <span class="stat-chip-lbl">University Established</span>
           </div>
@@ -3054,6 +3081,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     document.documentElement.classList.add('site-loaded');
 
     var sigGroup = document.getElementById('sig-text-group');
+    var debugGroup = document.getElementById('sig-debug-group');
 
     var strokeDefs = [
       { id: '#m-u', dur: 0.28, gap: 0.05 },
@@ -3064,6 +3092,14 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       { id: '#m-s2', dur: 0.26, gap: 0.05 },
       { id: '#m-s3', dur: 0.26, gap: 0.0 }
     ];
+
+    // Debug mode (?debug=1)
+    try {
+      var urlParams = new URLSearchParams(window.location.search);
+      if(urlParams.get('debug') === '1' && debugGroup){
+        debugGroup.style.display = 'block';
+      }
+    } catch(e){}
 
     if(prefersReduced || typeof gsap === 'undefined'){
       if(sigGroup) sigGroup.removeAttribute('mask');
@@ -3087,6 +3123,9 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       defaults: { ease: 'power2.inOut' }
     });
 
+    // Expose timeline globally for scrubbing / testing
+    window.__sig = heroTl;
+
     // Sequential stroke-by-stroke handwriting: invisible hand, no dots, natural speed modulation
     strokeDefs.forEach(function(s){
       heroTl.to(s.id, {
@@ -3108,23 +3147,34 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     // Staggered fade/slide in of hero content starting AFTER the last S finishes (~1.5s)
     heroTl.fromTo('.hero-stagger-item',
-      { opacity: 0, y: 18 },
+      { opacity: 0, y: 24 },
       {
         opacity: 1,
         y: 0,
-        duration: 0.5,
-        stagger: 0.09,
-        ease: 'power2.out',
+        duration: 0.7,
+        stagger: 0.1,
+        ease: 'power3.out',
         clearProps: 'transform'
       },
       '+=0.04'
     );
 
-    // Support timestamp seeking & frame capture verification via ?t=<seconds>
+    // Support timestamp seeking & frame capture verification via ?t=<seconds> or ?progress=<val>
     try {
       var urlParams = new URLSearchParams(window.location.search);
       var forceTime = urlParams.get('t');
-      if(forceTime !== null){
+      var forceProgress = urlParams.get('progress');
+      if(forceProgress !== null){
+        var pVal = parseFloat(forceProgress);
+        if(!isNaN(pVal)){
+          heroTl.progress(pVal);
+          heroTl.pause();
+          if(pVal >= 1.0){
+            if(sigGroup) sigGroup.removeAttribute('mask');
+            gsap.set('.hero-stagger-item', { opacity: 1, y: 0 });
+          }
+        }
+      } else if(forceTime !== null){
         var tVal = parseFloat(forceTime);
         if(!isNaN(tVal)){
           heroTl.seek(tVal);
@@ -3138,8 +3188,16 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     } catch(e){}
   }
 
-  // Initialize hero sequence immediately
-  initHeroSequence();
+  // Initialize hero sequence when fonts are loaded or DOM ready + 0.2s
+  if(document.fonts && document.fonts.ready){
+    document.fonts.ready.then(function(){
+      initHeroSequence();
+    }).catch(function(){
+      initHeroSequence();
+    });
+  } else {
+    initHeroSequence();
+  }
 
   /* ═══════════════════════════════════════════════════
      2. LENIS SMOOTH SCROLL
