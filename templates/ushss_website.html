@@ -825,8 +825,10 @@ nav.scrolled{
     max-width: 100%;
   }
   .hero-particle-wrap {
-    max-width: min(380px, 95vw);
-    height: clamp(100px, 16vh, 160px);
+    width: 100%;
+    max-width: calc(100vw - 2 * var(--page-gutter, 20px));
+    aspect-ratio: 834 / 220;
+    height: auto;
     margin-bottom: 0.8rem;
   }
   .hero-tagline {
@@ -3073,6 +3075,15 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // ── Single-run flags & stability guards ──
+    var introDone = false;
+    var perfFallbackDone = false;
+    var isScrolling = false;
+    var scrollTimer = null;
+    var pointerTimer = null;
+    var isRunning = true;
+    var isResting = false; // When true, RAF loop is paused at rest
+
     // ── Pre-allocated typed arrays (Zero allocations in RAF loop) ──
     var MAX_PARTICLES = 12000;
     var pSx = new Float32Array(MAX_PARTICLES); // source x in atlas (device px)
@@ -3088,6 +3099,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     var width = 0;
     var height = 0;
+    var lastBuiltWidth = 0;
     var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
     // Offscreen atlas canvases
@@ -3102,26 +3114,88 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     var atlasTop = 0;
     var curTile = 3; // CSS px: 3 on desktop, 4 on mobile
 
-    // Mouse coordinates relative to hero
+    // Mouse coordinates relative to hero (only active for mouse pointerType)
     var mouseX = -9999;
     var mouseY = -9999;
     var mouseActive = false;
 
-    function handlePointer(clientX, clientY){
-      var rect = heroSection.getBoundingClientRect();
-      mouseX = clientX - rect.left;
-      mouseY = clientY - rect.top;
-      mouseActive = true;
+    // Tap tracking for brief touch soft-push (pointerType touch only)
+    var touchStartX = 0;
+    var touchStartY = 0;
+    var touchMoved = false;
+
+    function wakeLoop(){
+      if(isResting){
+        isResting = false;
+        if(isRunning){
+          lastTime = performance.now();
+          requestAnimationFrame(render);
+        }
+      }
     }
 
+    // 1. INPUT HANDLING: Repulsion works ONLY for MOUSE input
     window.addEventListener('pointermove', function(e){
-      handlePointer(e.clientX, e.clientY);
+      if(e.pointerType !== 'mouse') return; // Touch and pen never scatter
+      if(isScrolling) return; // Ignore mouse while page is scrolling
+
+      var rect = heroSection.getBoundingClientRect();
+      mouseX = e.clientX - rect.left;
+      mouseY = e.clientY - rect.top;
+      mouseActive = true;
+
+      // Inactivity timeout: reset pointer if no move for 150ms
+      clearTimeout(pointerTimer);
+      pointerTimer = setTimeout(function(){
+        mouseX = -9999;
+        mouseY = -9999;
+        mouseActive = false;
+      }, 150);
+
+      wakeLoop();
     }, { passive: true });
 
-    window.addEventListener('touchmove', function(e){
-      if(e.touches && e.touches[0]){
-        handlePointer(e.touches[0].clientX, e.touches[0].clientY);
+    // Optional: brief tap on word gives one single soft push (touch pointerType only, move <= 8px)
+    window.addEventListener('pointerdown', function(e){
+      if(e.pointerType === 'touch'){
+        touchStartX = e.clientX;
+        touchStartY = e.clientY;
+        touchMoved = false;
       }
+    }, { passive: true });
+
+    window.addEventListener('pointerup', function(e){
+      if(e.pointerType === 'touch' && !touchMoved && !isScrolling){
+        var rect = heroSection.getBoundingClientRect();
+        var tapX = e.clientX - rect.left;
+        var tapY = e.clientY - rect.top;
+        // Check if tap was within word bounding box
+        if(tapX >= atlasLeft - 20 && tapX <= atlasLeft + atlasW + 20 &&
+           tapY >= atlasTop - 20 && tapY <= atlasTop + atlasH + 20){
+          mouseX = tapX;
+          mouseY = tapY;
+          mouseActive = true;
+          wakeLoop();
+          setTimeout(function(){
+            mouseX = -9999;
+            mouseY = -9999;
+            mouseActive = false;
+          }, 120);
+        }
+      }
+    }, { passive: true });
+
+    // Ignore pointer events while page is scrolling
+    window.addEventListener('scroll', function(){
+      isScrolling = true;
+      mouseX = -9999;
+      mouseY = -9999;
+      mouseActive = false;
+
+      clearTimeout(scrollTimer);
+      scrollTimer = setTimeout(function(){
+        isScrolling = false;
+      }, 150);
     }, { passive: true });
 
     window.addEventListener('pointerleave', function(){
@@ -3137,7 +3211,8 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     });
 
     // ── Build Atlas and Tile Particles ──
-    function buildAtlasAndTiles(){
+    // isSettledRebuild: if true, place particles directly on targets (no re-scatter / no replay)
+    function buildAtlasAndTiles(isSettledRebuild){
       var isMobile = window.innerWidth <= 768;
       curTile = isMobile ? 4 : 3;
 
@@ -3149,15 +3224,18 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       var wrapW = anchorRect.width;
       var wrapH = anchorRect.height;
 
-      // Strict boundary check
+      // Strict boundary check: clamp to --page-gutter and ensure word stays on screen
       var gutterStyle = getComputedStyle(document.documentElement).getPropertyValue('--page-gutter');
       var gutter = parseFloat(gutterStyle) || (isMobile ? 20 : 40);
       if(leftOffset < gutter) leftOffset = gutter;
 
+      var maxAllowedW = Math.max(100, (width || window.innerWidth) - gutter * 2);
+      if(wrapW > maxAllowedW) wrapW = maxAllowedW;
+
       atlasLeft = leftOffset;
       atlasTop = topOffset;
       atlasW = Math.ceil(wrapW);
-      atlasH = Math.ceil(wrapH);
+      atlasH = Math.ceil(wrapW * (220 / 834));
 
       var devW = Math.ceil(atlasW * dpr);
       var devH = Math.ceil(atlasH * dpr);
@@ -3169,7 +3247,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       actx.save();
       actx.scale(dpr, dpr);
 
-      // Clean, single-pass Serendipity font render: NO duplicate text, NO ghost shadow
+      // Clean single-pass Serendipity font render
       var scale = atlasW / 834;
       var fontSize = 200 * scale;
       var baselineY = 180 * scale;
@@ -3191,7 +3269,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       }
       actx.restore();
 
-      // Render blurred soft-glow atlas ONCE offscreen (#5FB8CC at 35% opacity, blur 10px)
+      // Render blurred soft-glow atlas ONCE offscreen
       glowCanvas.width = devW;
       glowCanvas.height = devH;
       gctx.clearRect(0, 0, devW, devH);
@@ -3203,7 +3281,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       gctx.fillRect(0, 0, devW, devH);
       gctx.restore();
 
-      // If prefers-reduced-motion, skip tiling physics
       if(prefersReduced){
         document.querySelectorAll('.hero-stagger-item').forEach(function(el){
           el.classList.add('revealed');
@@ -3211,7 +3288,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         return;
       }
 
-      // Cut the atlas into a grid of tiles
+      // Cut atlas into grid of tiles
       var imgData = actx.getImageData(0, 0, devW, devH);
       var data = imgData.data;
 
@@ -3229,7 +3306,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
           var curTileDevW = Math.min(tileDevPx, devW - srcDevX);
           var curTileDevH = Math.min(tileDevPx, devH - srcDevY);
 
-          // Check if tile has any non-transparent pixel
           var hasAlpha = false;
           var stepCheck = Math.max(1, Math.floor(dpr));
           for(var py = 0; py < curTileDevH; py += stepCheck){
@@ -3250,7 +3326,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
             var targetX = atlasLeft + tx * curTile;
             var targetY = atlasTop + ty * curTile;
 
-            // Clamp inside screen gutters
             if(targetX < gutter) targetX = gutter;
             if(targetX > maxAllowedX) targetX = maxAllowedX;
 
@@ -3259,15 +3334,23 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
             pTx[pCount] = targetX;
             pTy[pCount] = targetY;
 
-            // Intro: tiles start scattered across whole screen as tiny specks (s = 0.45)
-            pX[pCount] = Math.random() * width;
-            pY[pCount] = Math.random() * height;
-            pVx[pCount] = (Math.random() - 0.5) * 20;
-            pVy[pCount] = (Math.random() - 0.5) * 20;
+            if(isSettledRebuild || introDone){
+              // Rebuild directly in settled state: no re-scatter, no animation replay
+              pX[pCount] = targetX;
+              pY[pCount] = targetY;
+              pVx[pCount] = 0;
+              pVy[pCount] = 0;
+              pDelay[pCount] = 0;
+            } else {
+              // Initial scatter across screen (t=0 specks)
+              pX[pCount] = Math.random() * width;
+              pY[pCount] = Math.random() * height;
+              pVx[pCount] = (Math.random() - 0.5) * 20;
+              pVy[pCount] = (Math.random() - 0.5) * 20;
 
-            // Rush delay: left-to-right cascade (U -> S -> H -> S -> S)
-            var normX = Math.max(0, Math.min(1, (tx * curTile) / atlasW));
-            pDelay[pCount] = normX * 0.38 + Math.random() * 0.08; // 0 to ~0.46s (all started well before 1.2s)
+              var normX = Math.max(0, Math.min(1, (tx * curTile) / atlasW));
+              pDelay[pCount] = normX * 0.38 + Math.random() * 0.08;
+            }
 
             pCount++;
           }
@@ -3277,10 +3360,20 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       particleCount = pCount;
     }
 
-    function resize(){
+    // 2. RESIZE: Rebuild ONLY when viewport WIDTH changes > 40px; ignore height changes completely
+    function handleResize(){
+      var newWidth = window.innerWidth;
+      if(lastBuiltWidth > 0 && Math.abs(newWidth - lastBuiltWidth) <= 40){
+        return; // Address bar hide/show or tiny change: ignore completely
+      }
+
+      lastBuiltWidth = newWidth;
       var rect = heroSection.getBoundingClientRect();
       width = rect.width;
-      height = rect.height;
+      // Height remains stable or uses heroSection clientHeight
+      if(!height || height <= 0){
+        height = heroSection.clientHeight || window.innerHeight;
+      }
       dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
       canvas.width = Math.round(width * dpr);
@@ -3288,34 +3381,47 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       canvas.style.width = width + 'px';
       canvas.style.height = height + 'px';
 
-      buildAtlasAndTiles();
+      // If intro has already completed once, rebuild directly into settled state
+      buildAtlasAndTiles(introDone);
+      wakeLoop();
     }
+
+    // Initial setup
+    (function initSize(){
+      lastBuiltWidth = window.innerWidth;
+      var rect = heroSection.getBoundingClientRect();
+      width = rect.width;
+      height = heroSection.clientHeight || window.innerHeight;
+      dpr = Math.min(window.devicePixelRatio || 1, 1.5);
+
+      canvas.width = Math.round(width * dpr);
+      canvas.height = Math.round(height * dpr);
+      canvas.style.width = width + 'px';
+      canvas.style.height = height + 'px';
+
+      buildAtlasAndTiles(false);
+    })();
 
     var resizeTimer = null;
     window.addEventListener('resize', function(){
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(resize, 200);
+      resizeTimer = setTimeout(handleResize, 300);
     });
 
     var urlParams = null;
     try { urlParams = new URLSearchParams(window.location.search); } catch(e){}
     var forceT = urlParams ? urlParams.get('t') : null;
-    var testMouse = urlParams && urlParams.get('test_mouse') === '1';
-
-    resize();
+        var testMouse = urlParams && urlParams.get('test_mouse') === '1';
+    var testMobileScroll = urlParams && urlParams.get('test_mobile_scroll') === '1';
 
     // ── Animation Loop ──
     var startTime = performance.now();
     var lastTime = startTime;
     var textRevealed = false;
-    var isRunning = true;
 
-    // Performance monitor over first 60 frames
     var frameCount = 0;
     var totalFrameTime = 0;
-    var hasCheckedPerf = false;
 
-    // Repulsion physics
     var repRadius = (window.innerWidth <= 768) ? 70 : 110;
     var repRadiusSq = repRadius * repRadius;
 
@@ -3326,15 +3432,16 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       lastTime = now;
       var elapsed = Math.max(0, (now - startTime) / 1000);
 
-      if(!hasCheckedPerf && forceT === null){
+      // Performance fallback: runs AT MOST ONCE, rebuilds directly in settled state
+      if(!perfFallbackDone && forceT === null){
         frameCount++;
         totalFrameTime += dt * 1000;
         if(frameCount >= 60){
-          hasCheckedPerf = true;
+          perfFallbackDone = true;
           var avgFrameMs = totalFrameTime / 60;
           if(avgFrameMs > 20 && curTile < 4){
             curTile = 4;
-            buildAtlasAndTiles();
+            buildAtlasAndTiles(true); // Rebuild in settled state (no re-scatter)
           }
         }
       }
@@ -3346,7 +3453,15 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         mouseActive = true;
       }
 
-      // Step 1: Reveal hero text below after word forms (~1.3s)
+      // Test mobile scroll & height resize simulation
+      if(testMobileScroll && elapsed >= 1.4 && elapsed <= 2.2){
+        // Simulate window scroll event (400px down and back)
+        window.dispatchEvent(new Event('scroll'));
+        // Simulate height-only resize (e.g. address bar showing/hiding by 100px)
+        window.dispatchEvent(new Event('resize'));
+      }
+
+      // Step 1: Reveal hero text below after initial convergence (~1.3s)
       if(!textRevealed && elapsed >= 1.3){
         textRevealed = true;
         var staggerItems = document.querySelectorAll('.hero-stagger-item');
@@ -3361,7 +3476,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         });
       }
 
-      // Reduced motion: draw atlas directly, no physics
       if(prefersReduced){
         ctx.save();
         ctx.scale(dpr, dpr);
@@ -3373,13 +3487,13 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       }
 
       // Step 2: Physics update
-      // Spring K: starts at 60 for initial rush, eases to 38
       var springK = (elapsed < 1.1) ? 60 : 38;
       var damping = Math.pow(0.86, dt * 60);
 
-      var hasMouse = mouseActive && mouseX > -1000 && mouseY > -1000;
+      var hasMouse = mouseActive && mouseX > -1000 && mouseY > -1000 && !isScrolling;
       var tileDevPx = curTile * dpr;
       var allSettled = true;
+      var totalDist = 0;
 
       ctx.save();
       ctx.scale(dpr, dpr);
@@ -3387,9 +3501,10 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
       for(var i = 0; i < particleCount; i++){
         var curDelay = pDelay[i];
-        if(elapsed < curDelay){
+        if(!introDone && elapsed < curDelay){
           allSettled = false;
-          // Slowly drift in scattered phase
+          totalDist += 50;
+
           pX[i] += pVx[i] * dt * 0.3;
           pY[i] += pVy[i] * dt * 0.3;
           if(pX[i] < 0) pX[i] += width;
@@ -3397,7 +3512,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
           if(pY[i] < 0) pY[i] += height;
           if(pY[i] > height) pY[i] -= height;
 
-          // Far away size: tiny speck (45% size)
           var drawSz = curTile * 0.45;
           ctx.drawImage(atlasCanvas, pSx[i], pSy[i], tileDevPx, tileDevPx,
                         pX[i], pY[i], drawSz, drawSz);
@@ -3408,11 +3522,11 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
           var dx = tx - pX[i];
           var dy = ty - pY[i];
           var dist = Math.sqrt(dx * dx + dy * dy);
+          totalDist += dist;
 
           var ax = dx * springK;
           var ay = dy * springK;
 
-          // Mouse repulsion with slight swirl
           if(hasMouse){
             var mdx = pX[i] - mouseX;
             var mdy = pY[i] - mouseY;
@@ -3421,7 +3535,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
               var mDist = Math.sqrt(mDistSq);
               var factor = 1.0 - mDist / repRadius;
               var force = factor * factor * 1800;
-              // Repulsion + slight tangential swirl
               var nx = mdx / mDist;
               var ny = mdy / mDist;
               ax += (nx * force) + (-ny * force * 0.18);
@@ -3437,14 +3550,11 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
           var speedSq = pVx[i] * pVx[i] + pVy[i] * pVy[i];
 
-          // REST STATE SNAP RULE:
-          // When distance to target < 0.3px and speed is tiny, snap to exact target integer device pixel
-          // with draw size = curTile + 0.5px to eliminate hairline gaps
           var drawX = pX[i];
           var drawY = pY[i];
           var drawSz;
 
-          if(dist < 0.6 && speedSq < 2.5){
+          if(dist < 0.6 && speedSq < 2.5 && !hasMouse){
             drawX = tx;
             drawY = ty;
             pX[i] = tx;
@@ -3454,7 +3564,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
             drawSz = curTile + 0.5; // seamless overlap
           } else {
             allSettled = false;
-            // Scale formula: s = 0.45 + 0.55 * clamp(1 - distanceToTarget / 40, 0, 1)
             var s = 0.45 + 0.55 * Math.max(0, Math.min(1, 1 - dist / 40));
             drawSz = curTile * s;
           }
@@ -3464,14 +3573,28 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         }
       }
 
+      var avgDist = (particleCount > 0) ? (totalDist / particleCount) : 0;
+
+      // When settled once, mark introDone so it NEVER replays
+      if(!introDone && elapsed >= 1.25 && (allSettled || avgDist < 0.3)){
+        introDone = true;
+      }
+
       // Step 3: Draw soft glow atlas under the tiles when settled
-      if(allSettled && elapsed >= 1.25){
+      if(allSettled && (introDone || elapsed >= 1.25)){
         ctx.globalCompositeOperation = 'destination-over';
         ctx.drawImage(glowCanvas, atlasLeft, atlasTop, atlasW, atlasH);
         ctx.globalCompositeOperation = 'source-over';
       }
 
       ctx.restore();
+
+      // STABILITY AT REST:
+      // When all particles are settled and mouse is not active, stop RAF loop entirely
+      if(introDone && allSettled && !hasMouse && forceT === null){
+        isResting = true;
+        return; // Halt RAF until next real mouse interaction
+      }
 
       if(isRunning){
         requestAnimationFrame(render);
@@ -3493,17 +3616,33 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       }
     }
 
+    // IntersectionObserver / VisibilityChange ONLY pauses and resumes the rAF loop
     document.addEventListener('visibilitychange', function(){
       if(document.hidden){
         isRunning = false;
       } else {
         if(!isRunning){
           isRunning = true;
-          lastTime = performance.now();
-          requestAnimationFrame(render);
+          wakeLoop();
         }
       }
     });
+
+    if('IntersectionObserver' in window){
+      var heroObserver = new IntersectionObserver(function(entries){
+        entries.forEach(function(entry){
+          if(entry.isIntersecting){
+            if(!isRunning){
+              isRunning = true;
+              wakeLoop();
+            }
+          } else {
+            isRunning = false;
+          }
+        });
+      }, { threshold: 0.05 });
+      heroObserver.observe(heroSection);
+    }
 
     requestAnimationFrame(render);
   }
