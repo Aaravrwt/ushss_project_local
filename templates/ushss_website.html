@@ -584,31 +584,6 @@ nav.scrolled{
   display: block;
 }
 
-.hero-signature-svg {
-  width: 100%;
-  height: 100%;
-  overflow: visible;
-  display: block;
-}
-
-.sig-letter {
-  font-family: var(--font-signature);
-  font-size: 200px;
-  fill: var(--mist-200);
-  filter: drop-shadow(0 0 12px rgba(78, 174, 192, 0.5)) drop-shadow(0 2px 8px rgba(33, 42, 49, 0.7));
-}
-
-.hero-crisp-text {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  opacity: 0;
-  transition: opacity 0.35s ease-out;
-  pointer-events: none;
-  will-change: opacity;
-}
-
 .hero-fallback-title {
   display: none;
   font-family: var(--font-signature);
@@ -1987,17 +1962,8 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
     <!-- Left-Aligned Content Area -->
     <div class="hero-content-area">
       <div class="hero-left-col">
-        <!-- Spatial anchor & crisp SVG text in Serendipity -->
+        <!-- Spatial anchor for Serendipity particle text -->
         <div class="hero-particle-wrap" id="particle-wrap" role="img" aria-label="USHSS">
-          <div class="hero-crisp-text" id="hero-crisp-text" aria-hidden="true">
-            <svg class="hero-signature-svg" viewBox="0 0 834 220" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <text class="sig-letter" x="0" y="180">U</text>
-              <text class="sig-letter" x="193" y="180">S</text>
-              <text class="sig-letter" x="337" y="180">H</text>
-              <text class="sig-letter" x="538" y="180">S</text>
-              <text class="sig-letter" x="681" y="180">S</text>
-            </svg>
-          </div>
           <div class="hero-fallback-title">USHSS</div>
         </div>
         <noscript>
@@ -3099,53 +3065,53 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     var canvas = document.getElementById('hero-particle-canvas');
     var anchorWrap = document.getElementById('particle-wrap');
-    var crispText = document.getElementById('hero-crisp-text');
     var heroSection = document.getElementById('home');
     if(!canvas || !anchorWrap || !heroSection) return;
 
     var ctx = canvas.getContext('2d', { alpha: true });
     if(!ctx) return;
 
-    // Check prefers-reduced-motion
     var prefersReduced = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if(prefersReduced){
-      if(crispText) crispText.style.opacity = '1';
-      document.querySelectorAll('.hero-stagger-item').forEach(function(el){
-        el.classList.add('revealed');
-      });
-      return;
-    }
 
-    // ── Particle Arrays (Zero allocations in loop) ──
-    var MAX_PARTICLES = 6500;
-    var pX = new Float32Array(MAX_PARTICLES);
-    var pY = new Float32Array(MAX_PARTICLES);
-    var pVx = new Float32Array(MAX_PARTICLES);
-    var pVy = new Float32Array(MAX_PARTICLES);
-    var pTx = new Float32Array(MAX_PARTICLES);
-    var pTy = new Float32Array(MAX_PARTICLES);
+    // ── Pre-allocated typed arrays (Zero allocations in RAF loop) ──
+    var MAX_PARTICLES = 12000;
+    var pSx = new Float32Array(MAX_PARTICLES); // source x in atlas (device px)
+    var pSy = new Float32Array(MAX_PARTICLES); // source y in atlas (device px)
+    var pTx = new Float32Array(MAX_PARTICLES); // target x in hero canvas (CSS px)
+    var pTy = new Float32Array(MAX_PARTICLES); // target y in hero canvas (CSS px)
+    var pX = new Float32Array(MAX_PARTICLES);  // current x (CSS px)
+    var pY = new Float32Array(MAX_PARTICLES);  // current y (CSS px)
+    var pVx = new Float32Array(MAX_PARTICLES); // velocity x
+    var pVy = new Float32Array(MAX_PARTICLES); // velocity y
     var pDelay = new Float32Array(MAX_PARTICLES);
-    var pRadius = new Float32Array(MAX_PARTICLES);
-    var pColor = new Uint8Array(MAX_PARTICLES); // 0: #D3D9D4 (80%), 1: #5FB8CC (20%)
-    var pAlpha = new Float32Array(MAX_PARTICLES);
     var particleCount = 0;
 
     var width = 0;
     var height = 0;
     var dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 
+    // Offscreen atlas canvases
+    var atlasCanvas = document.createElement('canvas');
+    var actx = atlasCanvas.getContext('2d');
+    var glowCanvas = document.createElement('canvas');
+    var gctx = glowCanvas.getContext('2d');
+
+    var atlasW = 0;
+    var atlasH = 0;
+    var atlasLeft = 0;
+    var atlasTop = 0;
+    var curTile = 3; // CSS px: 3 on desktop, 4 on mobile
+
     // Mouse coordinates relative to hero
     var mouseX = -9999;
     var mouseY = -9999;
     var mouseActive = false;
-    var lastMouseMoveTime = 0;
 
     function handlePointer(clientX, clientY){
       var rect = heroSection.getBoundingClientRect();
       mouseX = clientX - rect.left;
       mouseY = clientY - rect.top;
       mouseActive = true;
-      lastMouseMoveTime = performance.now();
     }
 
     window.addEventListener('pointermove', function(e){
@@ -3170,37 +3136,10 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       mouseActive = false;
     });
 
-    // ── Pre-rendered tiny dot sprites ──
-    // 2 colors x 8 radius bins
-    var dotSprites = [];
-    (function createDotSprites(){
-      var cols = ['#D3D9D4', '#5FB8CC'];
-      for(var c = 0; c < 2; c++){
-        dotSprites[c] = [];
-        for(var rIdx = 0; rIdx < 8; rIdx++){
-          var r = 0.6 + (rIdx / 7) * 0.7; // 0.6 to 1.3px
-          var size = Math.ceil(r * 2) + 2;
-          var sCanvas = document.createElement('canvas');
-          sCanvas.width = size;
-          sCanvas.height = size;
-          var sctx = sCanvas.getContext('2d');
-          sctx.fillStyle = cols[c];
-          sctx.beginPath();
-          sctx.arc(size / 2, size / 2, r, 0, Math.PI * 2);
-          sctx.fill();
-          dotSprites[c][rIdx] = { canvas: sCanvas, half: size / 2 };
-        }
-      }
-    })();
-
-    // ── Word Bounding Box for interaction & sampling ──
-    var wordBox = { left: 0, top: 0, right: 0, bottom: 0, width: 0, height: 0 };
-
-    // ── Sample Target Points from clean SVG metrics ──
-    function sampleTargetPoints(){
+    // ── Build Atlas and Tile Particles ──
+    function buildAtlasAndTiles(){
       var isMobile = window.innerWidth <= 768;
-      var cap = isMobile ? 2500 : 6000;
-      var gridStep = isMobile ? 5 : 4;
+      curTile = isMobile ? 4 : 3;
 
       var heroRect = heroSection.getBoundingClientRect();
       var anchorRect = anchorWrap.getBoundingClientRect();
@@ -3210,32 +3149,35 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       var wrapW = anchorRect.width;
       var wrapH = anchorRect.height;
 
-      // Update wordBox
-      wordBox.left = leftOffset;
-      wordBox.top = topOffset;
-      wordBox.right = leftOffset + wrapW;
-      wordBox.bottom = topOffset + wrapH;
-      wordBox.width = wrapW;
-      wordBox.height = wrapH;
+      // Strict boundary check
+      var gutterStyle = getComputedStyle(document.documentElement).getPropertyValue('--page-gutter');
+      var gutter = parseFloat(gutterStyle) || (isMobile ? 20 : 40);
+      if(leftOffset < gutter) leftOffset = gutter;
 
-      // Offscreen canvas matching the wrap
-      var offCanvas = document.createElement('canvas');
-      offCanvas.width = Math.ceil(wrapW);
-      offCanvas.height = Math.ceil(wrapH);
-      var octx = offCanvas.getContext('2d', { willReadFrequently: true });
-      if(!octx) return;
+      atlasLeft = leftOffset;
+      atlasTop = topOffset;
+      atlasW = Math.ceil(wrapW);
+      atlasH = Math.ceil(wrapH);
 
-      // Font size to match 834x220 aspect ratio:
-      // fontSize = 200 * (wrapW / 834)
-      var scale = wrapW / 834;
+      var devW = Math.ceil(atlasW * dpr);
+      var devH = Math.ceil(atlasH * dpr);
+      if(devW <= 0 || devH <= 0) return;
+
+      atlasCanvas.width = devW;
+      atlasCanvas.height = devH;
+      actx.clearRect(0, 0, devW, devH);
+      actx.save();
+      actx.scale(dpr, dpr);
+
+      // Clean, single-pass Serendipity font render: NO duplicate text, NO ghost shadow
+      var scale = atlasW / 834;
       var fontSize = 200 * scale;
       var baselineY = 180 * scale;
 
-      octx.font = fontSize + 'px Serendipity, "Protest Revolution", Georgia, serif';
-      octx.fillStyle = '#FFFFFF';
-      octx.textBaseline = 'alphabetic';
+      actx.font = fontSize + 'px Serendipity, "Protest Revolution", Georgia, serif';
+      actx.fillStyle = '#D3D9D4';
+      actx.textBaseline = 'alphabetic';
 
-      // Draw individual letters at exact SVG x positions
       var glyphs = [
         { char: 'U', x: 0 },
         { char: 'S', x: 193 },
@@ -3245,85 +3187,94 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       ];
 
       for(var g = 0; g < glyphs.length; g++){
-        octx.fillText(glyphs[g].char, glyphs[g].x * scale, baselineY);
+        actx.fillText(glyphs[g].char, glyphs[g].x * scale, baselineY);
+      }
+      actx.restore();
+
+      // Render blurred soft-glow atlas ONCE offscreen (#5FB8CC at 35% opacity, blur 10px)
+      glowCanvas.width = devW;
+      glowCanvas.height = devH;
+      gctx.clearRect(0, 0, devW, devH);
+      gctx.save();
+      gctx.filter = 'blur(' + (10 * dpr) + 'px)';
+      gctx.drawImage(atlasCanvas, 0, 0);
+      gctx.globalCompositeOperation = 'source-in';
+      gctx.fillStyle = 'rgba(95, 184, 204, 0.35)';
+      gctx.fillRect(0, 0, devW, devH);
+      gctx.restore();
+
+      // If prefers-reduced-motion, skip tiling physics
+      if(prefersReduced){
+        document.querySelectorAll('.hero-stagger-item').forEach(function(el){
+          el.classList.add('revealed');
+        });
+        return;
       }
 
-      var imgW = offCanvas.width;
-      var imgH = offCanvas.height;
-      if(imgW <= 0 || imgH <= 0) return;
-
-      var imgData = octx.getImageData(0, 0, imgW, imgH);
+      // Cut the atlas into a grid of tiles
+      var imgData = actx.getImageData(0, 0, devW, devH);
       var data = imgData.data;
 
-      // Gutter clamp
-      var gutterStyle = getComputedStyle(document.documentElement).getPropertyValue('--page-gutter');
-      var gutter = parseFloat(gutterStyle) || 40;
-      var minAllowedX = gutter;
+      var tileDevPx = curTile * dpr;
+      var tilesX = Math.ceil(atlasW / curTile);
+      var tilesY = Math.ceil(atlasH / curTile);
+
+      var pCount = 0;
       var maxAllowedX = width - gutter;
 
-      var rawPoints = [];
-      for(var y = 0; y < imgH; y += gridStep){
-        for(var x = 0; x < imgW; x += gridStep){
-          var idx = (y * imgW + x) * 4;
-          if(data[idx + 3] > 160){
-            var targetX = leftOffset + x + (Math.random() - 0.5) * 1.0;
-            var targetY = topOffset + y + (Math.random() - 0.5) * 1.0;
+      for(var ty = 0; ty < tilesY; ty++){
+        for(var tx = 0; tx < tilesX; tx++){
+          var srcDevX = Math.round(tx * tileDevPx);
+          var srcDevY = Math.round(ty * tileDevPx);
+          var curTileDevW = Math.min(tileDevPx, devW - srcDevX);
+          var curTileDevH = Math.min(tileDevPx, devH - srcDevY);
 
-            // Strict clamp to prevent edge clipping
-            if(targetX < minAllowedX) targetX = minAllowedX;
+          // Check if tile has any non-transparent pixel
+          var hasAlpha = false;
+          var stepCheck = Math.max(1, Math.floor(dpr));
+          for(var py = 0; py < curTileDevH; py += stepCheck){
+            var rowIdx = (srcDevY + py) * devW;
+            for(var px = 0; px < curTileDevW; px += stepCheck){
+              var aIdx = (rowIdx + srcDevX + px) * 4 + 3;
+              if(data[aIdx] > 20){
+                hasAlpha = true;
+                break;
+              }
+            }
+            if(hasAlpha) break;
+          }
+
+          if(!hasAlpha) continue;
+
+          if(pCount < MAX_PARTICLES){
+            var targetX = atlasLeft + tx * curTile;
+            var targetY = atlasTop + ty * curTile;
+
+            // Clamp inside screen gutters
+            if(targetX < gutter) targetX = gutter;
             if(targetX > maxAllowedX) targetX = maxAllowedX;
 
-            rawPoints.push({
-              tx: targetX,
-              ty: targetY,
-              localX: x
-            });
+            pSx[pCount] = srcDevX;
+            pSy[pCount] = srcDevY;
+            pTx[pCount] = targetX;
+            pTy[pCount] = targetY;
+
+            // Intro: tiles start scattered across whole screen as tiny specks (s = 0.45)
+            pX[pCount] = Math.random() * width;
+            pY[pCount] = Math.random() * height;
+            pVx[pCount] = (Math.random() - 0.5) * 20;
+            pVy[pCount] = (Math.random() - 0.5) * 20;
+
+            // Rush delay: left-to-right cascade (U -> S -> H -> S -> S)
+            var normX = Math.max(0, Math.min(1, (tx * curTile) / atlasW));
+            pDelay[pCount] = normX * 0.38 + Math.random() * 0.08; // 0 to ~0.46s (all started well before 1.2s)
+
+            pCount++;
           }
         }
       }
 
-      // If count > cap, downsample
-      if(rawPoints.length > cap){
-        var ratio = cap / rawPoints.length;
-        var filtered = [];
-        for(var i = 0; i < rawPoints.length; i++){
-          if(Math.random() < ratio) filtered.push(rawPoints[i]);
-        }
-        rawPoints = filtered;
-      }
-
-      // Shuffle
-      for(var i = rawPoints.length - 1; i > 0; i--){
-        var j = Math.floor(Math.random() * (i + 1));
-        var temp = rawPoints[i];
-        rawPoints[i] = rawPoints[j];
-        rawPoints[j] = temp;
-      }
-
-      particleCount = Math.min(rawPoints.length, MAX_PARTICLES);
-
-      for(var i = 0; i < particleCount; i++){
-        var pt = rawPoints[i];
-        pTx[i] = pt.tx;
-        pTy[i] = pt.ty;
-
-        // Scattered phase at t=0: tiny dots across the FULL SCREEN, calm and sparse
-        pX[i] = Math.random() * width;
-        pY[i] = Math.random() * height;
-        pVx[i] = (Math.random() - 0.5) * 12;
-        pVy[i] = (Math.random() - 0.5) * 12;
-
-        // Rush delay: strictly left-to-right (U -> S -> H -> S -> S)
-        var normX = Math.max(0, Math.min(1, pt.localX / imgW));
-        pDelay[i] = normX * 0.65 + Math.random() * 0.10; // 0.0s to ~0.75s
-
-        // Radius: 0.6 to 1.3px
-        pRadius[i] = 0.6 + Math.random() * 0.7;
-        // Color: 80% mist-200 (0), 20% teal-300 (1)
-        pColor[i] = (Math.random() < 0.20) ? 1 : 0;
-        // Alpha: 0.7 to 1.0
-        pAlpha[i] = 0.7 + Math.random() * 0.3;
-      }
+      particleCount = pCount;
     }
 
     function resize(){
@@ -3337,7 +3288,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       canvas.style.width = width + 'px';
       canvas.style.height = height + 'px';
 
-      sampleTargetPoints();
+      buildAtlasAndTiles();
     }
 
     var resizeTimer = null;
@@ -3346,7 +3297,6 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       resizeTimer = setTimeout(resize, 200);
     });
 
-    // Check for ?t= or ?test_mouse=1 in URL
     var urlParams = null;
     try { urlParams = new URLSearchParams(window.location.search); } catch(e){}
     var forceT = urlParams ? urlParams.get('t') : null;
@@ -3354,21 +3304,19 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
     resize();
 
-    // ── Hybrid State Management ──
-    // Mode: 'DOTS' (canvas dots visible, crisp text 0)
-    //       'CRISP' (crisp text 1, canvas dots 0)
-    var currentMode = 'DOTS';
-    var canvasOpacity = 1.0;
-    var crispOpacity = 0.0;
-    var hasSettledOnce = false;
+    // ── Animation Loop ──
+    var startTime = performance.now();
+    var lastTime = startTime;
     var textRevealed = false;
     var isRunning = true;
 
-    var startTime = performance.now();
-    var lastTime = startTime;
+    // Performance monitor over first 60 frames
+    var frameCount = 0;
+    var totalFrameTime = 0;
+    var hasCheckedPerf = false;
 
-    // Repulsion parameters
-    var repRadius = (window.innerWidth <= 768) ? 65 : 100;
+    // Repulsion physics
+    var repRadius = (window.innerWidth <= 768) ? 70 : 110;
     var repRadiusSq = repRadius * repRadius;
 
     function render(now){
@@ -3378,16 +3326,28 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       lastTime = now;
       var elapsed = Math.max(0, (now - startTime) / 1000);
 
-      // Test mouse flag for headless capture
-      if(testMouse && elapsed >= 1.0){
-        mouseX = wordBox.left + wordBox.width * 0.45;
-        mouseY = wordBox.top + wordBox.height * 0.50;
-        mouseActive = true;
-        lastMouseMoveTime = now;
+      if(!hasCheckedPerf && forceT === null){
+        frameCount++;
+        totalFrameTime += dt * 1000;
+        if(frameCount >= 60){
+          hasCheckedPerf = true;
+          var avgFrameMs = totalFrameTime / 60;
+          if(avgFrameMs > 20 && curTile < 4){
+            curTile = 4;
+            buildAtlasAndTiles();
+          }
+        }
       }
 
-      // ── Step 1: Reveal hero text below after initial convergence (~1.25s) ──
-      if(!textRevealed && elapsed >= 1.25){
+      // Test mouse flag for headless verification
+      if(testMouse && elapsed >= 0.8){
+        mouseX = atlasLeft + atlasW * 0.42;
+        mouseY = atlasTop + atlasH * 0.50;
+        mouseActive = true;
+      }
+
+      // Step 1: Reveal hero text below after word forms (~1.3s)
+      if(!textRevealed && elapsed >= 1.3){
         textRevealed = true;
         var staggerItems = document.querySelectorAll('.hero-stagger-item');
         staggerItems.forEach(function(el, idx){
@@ -3401,59 +3361,71 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         });
       }
 
-      // ── Step 2: Physics update & compute average distance to target ──
-      var totalDist = 0;
-      var springK = (elapsed < 1.1) ? 58 : 42;
-      var damping = Math.pow(0.80, dt * 60);
+      // Reduced motion: draw atlas directly, no physics
+      if(prefersReduced){
+        ctx.save();
+        ctx.scale(dpr, dpr);
+        ctx.clearRect(0, 0, width, height);
+        ctx.drawImage(glowCanvas, atlasLeft, atlasTop, atlasW, atlasH);
+        ctx.drawImage(atlasCanvas, atlasLeft, atlasTop, atlasW, atlasH);
+        ctx.restore();
+        return;
+      }
+
+      // Step 2: Physics update
+      // Spring K: starts at 60 for initial rush, eases to 38
+      var springK = (elapsed < 1.1) ? 60 : 38;
+      var damping = Math.pow(0.86, dt * 60);
 
       var hasMouse = mouseActive && mouseX > -1000 && mouseY > -1000;
+      var tileDevPx = curTile * dpr;
+      var allSettled = true;
 
-      // Check distance of mouse to word bounding box
-      var mouseNearWord = false;
-      if(hasMouse){
-        var nearDistX = Math.max(0, Math.max(wordBox.left - mouseX, mouseX - wordBox.right));
-        var nearDistY = Math.max(0, Math.max(wordBox.top - mouseY, mouseY - wordBox.bottom));
-        var boxDistSq = nearDistX * nearDistX + nearDistY * nearDistY;
-        if(boxDistSq < 60 * 60){ // within 60px of bounding box
-          mouseNearWord = true;
-        }
-      }
+      ctx.save();
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, width, height);
 
       for(var i = 0; i < particleCount; i++){
         var curDelay = pDelay[i];
         if(elapsed < curDelay){
-          // t < delay: gently drift in scattered state
-          pX[i] += pVx[i] * dt * 0.4;
-          pY[i] += pVy[i] * dt * 0.4;
-          // Wrap around viewport edges during initial drift
+          allSettled = false;
+          // Slowly drift in scattered phase
+          pX[i] += pVx[i] * dt * 0.3;
+          pY[i] += pVy[i] * dt * 0.3;
           if(pX[i] < 0) pX[i] += width;
           if(pX[i] > width) pX[i] -= width;
           if(pY[i] < 0) pY[i] += height;
           if(pY[i] > height) pY[i] -= height;
-          totalDist += 100;
+
+          // Far away size: tiny speck (45% size)
+          var drawSz = curTile * 0.45;
+          ctx.drawImage(atlasCanvas, pSx[i], pSy[i], tileDevPx, tileDevPx,
+                        pX[i], pY[i], drawSz, drawSz);
         } else {
-          // Rush to target
           var tx = pTx[i];
           var ty = pTy[i];
 
           var dx = tx - pX[i];
           var dy = ty - pY[i];
-          var dToTarget = Math.sqrt(dx * dx + dy * dy);
-          totalDist += dToTarget;
+          var dist = Math.sqrt(dx * dx + dy * dy);
 
           var ax = dx * springK;
           var ay = dy * springK;
 
-          // Mouse repulsion force
+          // Mouse repulsion with slight swirl
           if(hasMouse){
             var mdx = pX[i] - mouseX;
             var mdy = pY[i] - mouseY;
-            var distSq = mdx * mdx + mdy * mdy;
-            if(distSq < repRadiusSq && distSq > 0.1){
-              var dist = Math.sqrt(distSq);
-              var force = (1.0 - dist / repRadius) * 2600;
-              ax += (mdx / dist) * force;
-              ay += (mdy / dist) * force;
+            var mDistSq = mdx * mdx + mdy * mdy;
+            if(mDistSq < repRadiusSq && mDistSq > 0.1){
+              var mDist = Math.sqrt(mDistSq);
+              var factor = 1.0 - mDist / repRadius;
+              var force = factor * factor * 1800;
+              // Repulsion + slight tangential swirl
+              var nx = mdx / mDist;
+              var ny = mdy / mDist;
+              ax += (nx * force) + (-ny * force * 0.18);
+              ay += (ny * force) + (nx * force * 0.18);
             }
           }
 
@@ -3462,74 +3434,41 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
 
           pX[i] += pVx[i] * dt;
           pY[i] += pVy[i] * dt;
-        }
-      }
 
-      var avgDist = (particleCount > 0) ? (totalDist / particleCount) : 999;
+          var speedSq = pVx[i] * pVx[i] + pVy[i] * pVy[i];
 
-      // ── Step 3: Hybrid Crossfade State Machine ──
-      // When elapsed >= 1.25s and avgDist < 1.0px, transition to CRISP
-      if(!hasSettledOnce && elapsed >= 1.25 && avgDist < 1.0){
-        hasSettledOnce = true;
-        currentMode = 'CRISP';
-      }
+          // REST STATE SNAP RULE:
+          // When distance to target < 0.3px and speed is tiny, snap to exact target integer device pixel
+          // with draw size = curTile + 0.5px to eliminate hairline gaps
+          var drawX = pX[i];
+          var drawY = pY[i];
+          var drawSz;
 
-      // Mouse triggers immediate switch to DOTS if within 60px
-      if(mouseNearWord){
-        if(currentMode === 'CRISP'){
-          currentMode = 'DOTS';
-          // Snap particles precisely onto targets before physics push starts
-          for(var i = 0; i < particleCount; i++){
-            pX[i] = pTx[i];
-            pY[i] = pTy[i];
+          if(dist < 0.6 && speedSq < 2.5){
+            drawX = tx;
+            drawY = ty;
+            pX[i] = tx;
+            pY[i] = ty;
             pVx[i] = 0;
             pVy[i] = 0;
+            drawSz = curTile + 0.5; // seamless overlap
+          } else {
+            allSettled = false;
+            // Scale formula: s = 0.45 + 0.55 * clamp(1 - distanceToTarget / 40, 0, 1)
+            var s = 0.45 + 0.55 * Math.max(0, Math.min(1, 1 - dist / 40));
+            drawSz = curTile * s;
           }
-        }
-      } else if(hasSettledOnce && currentMode === 'DOTS'){
-        // If mouse away for > 0.4s and particles settled (< 1px avgDist), switch back to CRISP
-        var timeSinceMouse = (now - lastMouseMoveTime) / 1000;
-        if(timeSinceMouse > 0.4 && avgDist < 1.0){
-          currentMode = 'CRISP';
+
+          ctx.drawImage(atlasCanvas, pSx[i], pSy[i], tileDevPx, tileDevPx,
+                        drawX, drawY, drawSz, drawSz);
         }
       }
 
-      // Animate crossfade opacities
-      if(currentMode === 'CRISP'){
-        // Crossfade over 0.35s
-        var fadeRate = dt / 0.35;
-        crispOpacity = Math.min(1.0, Math.max(0.0, crispOpacity + fadeRate));
-        canvasOpacity = Math.min(1.0, Math.max(0.0, canvasOpacity - fadeRate));
-      } else {
-        // Fast switch to dots over 0.12s
-        var fadeRate = dt / 0.12;
-        crispOpacity = Math.min(1.0, Math.max(0.0, crispOpacity - fadeRate));
-        canvasOpacity = Math.min(1.0, Math.max(0.0, canvasOpacity + fadeRate));
-      }
-
-      if(crispText){
-        crispText.style.opacity = crispOpacity.toFixed(3);
-      }
-
-      // ── Step 4: Draw Canvas Dots ──
-      ctx.save();
-      ctx.scale(dpr, dpr);
-      ctx.clearRect(0, 0, width, height);
-
-      if(canvasOpacity > 0.005){
-        ctx.globalAlpha = canvasOpacity;
+      // Step 3: Draw soft glow atlas under the tiles when settled
+      if(allSettled && elapsed >= 1.25){
+        ctx.globalCompositeOperation = 'destination-over';
+        ctx.drawImage(glowCanvas, atlasLeft, atlasTop, atlasW, atlasH);
         ctx.globalCompositeOperation = 'source-over';
-
-        for(var i = 0; i < particleCount; i++){
-          var colIdx = pColor[i];
-          var rVal = pRadius[i];
-          // Map rVal (0.6..1.3) to 0..7 bin
-          var rIdx = Math.max(0, Math.min(7, Math.round(((rVal - 0.6) / 0.7) * 7)));
-          var sprite = dotSprites[colIdx][rIdx];
-          if(sprite){
-            ctx.drawImage(sprite.canvas, pX[i] - sprite.half, pY[i] - sprite.half);
-          }
-        }
       }
 
       ctx.restore();
@@ -3539,7 +3478,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       }
     }
 
-    // Support ?t=<seconds> for exact headless test verification
+    // Headless simulation for exact test verification (?t=<seconds>)
     if(forceT !== null){
       var targetT = parseFloat(forceT);
       if(!isNaN(targetT) && targetT >= 0){
@@ -3549,7 +3488,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
           render(startTime + simElapsed * 1000);
           simElapsed += step;
         }
-        isRunning = false; // Halt RAF so headless Chrome captures exact frozen frame
+        isRunning = false;
         return;
       }
     }
