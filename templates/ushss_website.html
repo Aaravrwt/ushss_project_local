@@ -902,6 +902,10 @@ nav.scrolled{
   }
 }
 
+:root {
+  --cover-bg: rgba(247, 249, 248, 0.80);
+}
+
 /* ── CUTOUT TEXT SECTION ── */
 .cutout-section{
   position:relative;
@@ -912,9 +916,27 @@ nav.scrolled{
   align-items:center;
   justify-content:center;
   overflow:hidden;
-  background:var(--ink-900);
+  background-color:#EBF0EC;
 }
-.cutout-bg{display:none}
+.cutout-bg{
+  position:absolute;
+  inset:0;
+  background-image:url('/static/images/ushss_cutout_bg.jpg');
+  background-size:cover;
+  background-position:center 50%;
+  background-repeat:no-repeat;
+  z-index:1;
+  display:block;
+}
+.cutout-cover{
+  position:absolute;
+  inset:0;
+  background:var(--cover-bg);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  z-index:2;
+  pointer-events:none;
+}
 .cutout-mask{
   position:relative;
   width:100%;
@@ -923,7 +945,7 @@ nav.scrolled{
   align-items:center;
   justify-content:center;
   background:transparent;
-  z-index:2;
+  z-index:3;
   padding:0 1.5rem;
 }
 .cutout-mask h2{
@@ -936,7 +958,7 @@ nav.scrolled{
   user-select:none;
   margin:0;
   transform:translateY(-0.8rem);
-  background-image:linear-gradient(135deg, rgba(78, 174, 192, 0.40) 0%, rgba(18, 78, 102, 0.30) 60%, rgba(33, 42, 49, 0.55) 100%), url('/static/images/ushss_cutout_bg.jpg');
+  background-image:linear-gradient(135deg, rgba(18, 78, 102, 0.20) 0%, rgba(33, 42, 49, 0.35) 100%), url('/static/images/ushss_cutout_bg.jpg');
   background-size:cover, cover;
   background-repeat:no-repeat, no-repeat;
   background-position:center center, center 50%;
@@ -944,30 +966,31 @@ nav.scrolled{
   background-clip:text;
   -webkit-text-fill-color:transparent;
   color:transparent;
-  filter:drop-shadow(0 6px 24px rgba(33,42,49,0.85));
+  filter:drop-shadow(0 4px 18px rgba(33,42,49,0.30));
   will-change:transform, opacity, background-position;
 }
-/* Subtle tagline below the cutout */
+/* Tagline below the cutout: high-contrast ink-900 (#212A31) on light cover */
 .cutout-tagline{
   position:absolute;
   bottom:2.4rem;
   left:0;right:0;
   text-align:center;
-  z-index:3;
+  z-index:4;
   pointer-events:none;
 }
 .cutout-tagline span{
   font-family:'EB Garamond',serif;
   font-size:clamp(0.85rem,1.3vw,1.1rem);
-  color:var(--mist-200);
-  opacity:0.82;
+  color:#212A31;
+  opacity:0.92;
   letter-spacing:2.5px;
   text-transform:uppercase;
-  font-weight:500;
+  font-weight:600;
   opacity:0;
   transform:translateY(12px);
   transition:opacity .7s ease .2s, transform .7s ease .2s;
   display:inline-block;
+  text-shadow:0 1px 2px rgba(255,255,255,0.8);
 }
 .cutout-section.in-view .cutout-tagline span{
   opacity:1;
@@ -1762,6 +1785,7 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
   .hero-editorial-panel,.about-editorial,.value-card,.prog-card,.faculty-card { transform:none!important; }
 }
 </style>
+
 </head>
 <body>
 
@@ -2032,6 +2056,7 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
 <!-- CUTOUT TEXT -->
 <div class="cutout-section" id="cutout">
   <div class="cutout-bg"></div>
+  <div class="cutout-cover"></div>
   <div class="cutout-mask">
     <h2>USHSS</h2>
   </div>
@@ -3412,7 +3437,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     try { urlParams = new URLSearchParams(window.location.search); } catch(e){}
     var forceT = urlParams ? urlParams.get('t') : null;
         var testMouse = urlParams && urlParams.get('test_mouse') === '1';
-    var testMobileScroll = urlParams && urlParams.get('test_mobile_scroll') === '1';
+
 
     // ── Animation Loop ──
     var startTime = performance.now();
@@ -3453,13 +3478,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
         mouseActive = true;
       }
 
-      // Test mobile scroll & height resize simulation
-      if(testMobileScroll && elapsed >= 1.4 && elapsed <= 2.2){
-        // Simulate window scroll event (400px down and back)
-        window.dispatchEvent(new Event('scroll'));
-        // Simulate height-only resize (e.g. address bar showing/hiding by 100px)
-        window.dispatchEvent(new Event('resize'));
-      }
+
 
       // Step 1: Reveal hero text below after initial convergence (~1.3s)
       if(!textRevealed && elapsed >= 1.3){
@@ -3667,9 +3686,9 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   /* ═══════════════════════════════════════════════════
      2. LENIS SMOOTH SCROLL
      ═══════════════════════════════════════════════════ */
-  let lenis = null;
+  let lenis = null; window.__lenis = null;
   if(!prefersReduced && typeof Lenis !== 'undefined'){
-    lenis = new Lenis({
+        lenis = new Lenis({
       duration: 1.1,
       easing: function(t){ return Math.min(1, 1.001 - Math.pow(2, -10 * t)); },
       orientation: 'vertical',
@@ -3678,6 +3697,9 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       wheelMultiplier: 1,
       touchMultiplier: 1.5,
     });
+
+    window.__lenis = lenis;
+
 
     // Integrate Lenis with GSAP ticker
     if(typeof gsap !== 'undefined'){
