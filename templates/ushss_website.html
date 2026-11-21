@@ -3164,16 +3164,18 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     var touchStartY = 0;
     var touchMoved = false;
 
+    var rafId = null;
+
     function wakeLoop(){
       if(isResting){
         isResting = false;
-        if(isRunning){
-          lastTime = performance.now();
-          requestAnimationFrame(render);
-        }
-      } else if(isRunning && !isResting){
-        // Ensure loop is actively scheduled
+      }
+      if(!isRunning){
+        isRunning = true;
+      }
+      if(!rafId){
         lastTime = performance.now();
+        rafId = requestAnimationFrame(render);
       }
     }
 
@@ -3639,11 +3641,14 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       // When all particles are settled and mouse is not active, stop RAF loop entirely
       if(introDone && allSettled && !hasMouse && forceT === null){
         isResting = true;
+        rafId = null;
         return; // Halt RAF until next real mouse interaction
       }
 
       if(isRunning){
-        requestAnimationFrame(render);
+        rafId = requestAnimationFrame(render);
+      } else {
+        rafId = null;
       }
     }
 
@@ -3666,13 +3671,12 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
     document.addEventListener('visibilitychange', function(){
       if(document.hidden){
         isRunning = false;
-      } else {
-        if(!isRunning){
-          isRunning = true;
-          isResting = false;
-          lastTime = performance.now();
-          requestAnimationFrame(render);
+        if(rafId){
+          cancelAnimationFrame(rafId);
+          rafId = null;
         }
+      } else {
+        wakeLoop();
       }
     });
 
@@ -3680,18 +3684,15 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       var heroObserver = new IntersectionObserver(function(entries){
         entries.forEach(function(entry){
           if(entry.isIntersecting){
-            var wasStopped = !isRunning || isResting;
-            isRunning = true;
-            isResting = false;
-            if(wasStopped){
-              lastTime = performance.now();
-              requestAnimationFrame(render);
-            }
+            wakeLoop();
           } else {
-            // Only pause RAF when hero is out of view if intro has already completed
-            // If intro is still forming, let it finish settling so it doesn't freeze in space
+            // Only pause RAF when hero is completely out of view AND intro has finished
             if(introDone){
               isRunning = false;
+              if(rafId){
+                cancelAnimationFrame(rafId);
+                rafId = null;
+              }
             }
           }
         });
@@ -3699,7 +3700,7 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       heroObserver.observe(heroSection);
     }
 
-    requestAnimationFrame(render);
+    wakeLoop();
   }
   function startHeroSystemWhenReady(){
     if(document.fonts && document.fonts.ready){
