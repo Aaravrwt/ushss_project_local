@@ -202,9 +202,9 @@
 
   /* Project virtual (vx, vy) → screen pixels */
   function projectPt(vx, vy, z, depth, phase, scrollY) {
-    const screenY  = vyToAbs(vy) - scrollY;      // ← key: uses actual section heights
-    const trunkX   = 0.90 * W;
-    const xSpread  = 0.09 * W;
+    const screenY  = vyToAbs(vy) - scrollY;
+    const trunkX   = 0.80 * W;   // trunk at 80% — gives roots room to spread left into visible margin
+    const xSpread  = 0.11 * W;   // slightly wider spread so branches fan out more
     const persp    = 1 / (1 - z * 0.35);
     const wx       = windDelta(depth, phase, windT);
     const screenX  = trunkX + (vx * xSpread + wx) * persp;
@@ -263,8 +263,8 @@
       if (p1.y > H+80 && p2.y > H+80) continue;
 
       const midX = (p1.x + p2.x) * 0.5;
-      const edgeFade = midX < 0.72*W ? 0 :
-                       midX < 0.80*W ? (midX - 0.72*W)/(0.08*W) * 0.25 : 1;
+      const edgeFade = midX < 0.65*W ? 0 :
+                       midX < 0.72*W ? (midX - 0.65*W)/(0.07*W) * 0.25 : 1;
       if (edgeFade <= 0) continue;
 
       ctx.strokeStyle = segColor(type, sDepth[i], maxDepth,
@@ -286,9 +286,9 @@
       if (p1.y > H+80 && p2.y > H+80) continue;
 
       const midX = (p1.x + p2.x) * 0.5;
-      let edgeFade = midX < 0.72*W ? 0 :
-                     midX < 0.80*W ? (midX - 0.72*W)/(0.08*W) : 1;
-      edgeFade *= (midX < 0.80*W ? 0.50 : 0.85);
+      let edgeFade = midX < 0.65*W ? 0 :
+                     midX < 0.72*W ? (midX - 0.65*W)/(0.07*W) : 1;
+      edgeFade *= (midX < 0.72*W ? 0.50 : 0.85);
       if (edgeFade <= 0) continue;
 
       const persp = 1 / (1 - szArr[i] * 0.35);
@@ -306,7 +306,7 @@
     const rootTop    = vyToAbs(2.0) - sy;          // = cTop - sy (top of Faculty)
     const rootHeight = cBottom - cTop;              // actual Faculty section height
     for (let k = 0; k < 60; k++) {
-      const speckX = 0.80*W + (k/60)*0.18*W + Math.sin(windT*0.3 + k)*2.5;
+      const speckX = 0.72*W + (k/60)*0.26*W + Math.sin(windT*0.3 + k)*2.5;
       const speckY = rootTop + (k/60)*rootHeight   + Math.sin(windT*0.2 + k*1.3)*4;
       if (speckY < -5 || speckY > H+5) continue;
       const ef = speckX < 0.80*W ? 0 : Math.min(1,(speckX-0.80*W)/(0.08*W));
