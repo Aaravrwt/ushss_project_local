@@ -928,46 +928,24 @@ nav.scrolled{
   z-index:1;
   display:block;
 }
-.cutout-cover{
+/* SVG cover with letter-shaped hole */
+.cutout-cover-svg{
   position:absolute;
   inset:0;
-  background:var(--cover-bg);
-  backdrop-filter:blur(6px);
-  -webkit-backdrop-filter:blur(6px);
-  z-index:2;
-  pointer-events:none;
-}
-.cutout-mask{
-  position:relative;
   width:100%;
   height:100%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  background:transparent;
-  z-index:3;
-  padding:0 1.5rem;
+  display:block;
+  z-index:2;
+  pointer-events:none;
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
 }
-.cutout-mask h2{
-  font-family:'Playfair Display',serif;
-  font-size:clamp(6.5rem,17vw,13rem);
-  font-weight:900;
-  letter-spacing:0.04em;
-  line-height:0.95;
-  text-align:center;
-  user-select:none;
-  margin:0;
-  transform:translateY(-0.8rem);
-  background-image:linear-gradient(135deg, rgba(18, 78, 102, 0.20) 0%, rgba(33, 42, 49, 0.35) 100%), url('/static/images/ushss_cutout_bg.jpg');
-  background-size:cover, cover;
-  background-repeat:no-repeat, no-repeat;
-  background-position:center center, center 50%;
-  -webkit-background-clip:text;
-  background-clip:text;
-  -webkit-text-fill-color:transparent;
-  color:transparent;
-  filter:drop-shadow(0 4px 18px rgba(33,42,49,0.30));
-  will-change:transform, opacity, background-position;
+/* Keep .cutout-mask as a stacking container but no longer renders anything visible */
+.cutout-mask{
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
 }
 /* Tagline below the cutout: high-contrast ink-900 (#212A31) on light cover */
 .cutout-tagline{
@@ -998,13 +976,13 @@ nav.scrolled{
 }
 @media(max-width:900px){
   .cutout-section{height:clamp(230px, 32vh, 290px);min-height:230px}
-  .cutout-mask h2{font-size:clamp(4.2rem,15vw,8rem);transform:translateY(-0.5rem)}
+  #ushssHoleText{font-size:clamp(4.2rem,15vw,8rem)}
   .cutout-tagline{bottom:1.5rem}
   .cutout-tagline span{font-size:0.82rem;letter-spacing:1.8px}
 }
 @media(max-width:560px){
   .cutout-section{height:clamp(180px, 28vh, 220px);min-height:180px}
-  .cutout-mask h2{font-size:clamp(3.4rem,16vw,5.2rem);transform:translateY(-0.35rem)}
+  #ushssHoleText{font-size:clamp(3.4rem,16vw,5.2rem)}
   .cutout-tagline{bottom:1rem}
   .cutout-tagline span{font-size:0.72rem;letter-spacing:1.2px}
 }
@@ -2070,11 +2048,31 @@ footer { background: #182026; border-top:1px solid rgba(116, 141, 146, 0.20); }
 
 <!-- CUTOUT TEXT -->
 <div class="cutout-section" id="cutout">
-  <div class="cutout-bg"></div>
-  <div class="cutout-cover"></div>
-  <div class="cutout-mask">
-    <h2>USHSS</h2>
-  </div>
+  <!-- Layer 1: One static image, never moves -->
+  <div class="cutout-bg" aria-hidden="true"></div>
+  <!-- Layer 2: SVG cover with a letter-shaped hole (SVG mask) -->
+  <svg class="cutout-cover-svg" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <mask id="ushssHole" maskUnits="userSpaceOnUse">
+        <rect width="100%" height="100%" fill="white"/>
+        <!-- The black text punches a transparent hole in the white mask -->
+        <text id="ushssHoleText"
+              font-family="'Playfair Display',serif"
+              font-size="clamp(6.5rem,17vw,13rem)"
+              font-weight="900"
+              letter-spacing="0.04em"
+              text-anchor="middle"
+              dominant-baseline="middle"
+              x="50%" y="50%"
+              dy="-0.8rem"
+              fill="black">USHSS</text>
+      </mask>
+    </defs>
+    <rect width="100%" height="100%" style="fill:var(--cover-bg)" mask="url(#ushssHole)"/>
+  </svg>
+  <!-- Layer 3: Stacking container for GSAP targeting (invisible itself) -->
+  <div class="cutout-mask" aria-hidden="true"></div>
+  <!-- Layer 4: Tagline above cover -->
   <div class="cutout-tagline">
     <span>University School of Humanities &amp; Social Sciences</span>
   </div>
@@ -3916,38 +3914,53 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
       );
     });
 
-    // ── 4d. Cutout section: Parallax scroll through image + Two-way scale ──
+    // ── 4d. Cutout section: SVG hole text scale on scroll ──
     var cutoutSection = document.querySelector('.cutout-section');
     if(cutoutSection){
-      var cutoutText = cutoutSection.querySelector('.cutout-mask h2');
-      if(cutoutText && !prefersReduced){
-        // Dynamic parallax scroll through the underlying campus image
-        // As you scroll up/down, the image pans vertically through the letters
+      var cutoutHoleText = document.getElementById('ushssHoleText');
+      var cutoutCoverRect = cutoutSection.querySelector('.cutout-cover-svg rect');
+      if(cutoutHoleText && !prefersReduced){
+        // Animate the SVG <text> element's scale — the hole moves,
+        // the static image layer is revealed through it at different scales.
+        // NOTE: do NOT animate opacity on the mask text (that would make the hole
+        // semi-transparent). Instead animate the cover rect opacity for fades.
         var cutoutTl = gsap.timeline({
           scrollTrigger: {
             trigger: cutoutSection,
             start: 'top bottom',
             end: 'bottom top',
             scrub: 0.6,
-            onUpdate: function(self) {
-              // Panning from 5% near top of image to 95% near bottom
-              var p = self.progress;
-              var yPos = (5 + p * 90).toFixed(1);
-              cutoutText.style.backgroundPosition = 'center center, center ' + yPos + '%';
-            }
           }
         });
 
-        // Enlarging & shrinking effect:
-        // Enters small (0.82) -> peaks at full glory (1.06) in center -> shrinks back (0.82) on exit
+        // Set SVG transform-origin to centre of the element
+        gsap.set(cutoutHoleText, { transformOrigin: '50% 50%', svgOrigin: '50% 50%' });
+
+        // Enters small (0.82) -> peaks at full (1.06) in centre -> shrinks back (0.82) on exit
+        // Cover rect fades with the section to match old opacity 0.40 -> 1 -> 0.40 feel
         cutoutTl
-          .fromTo(cutoutText,
-            { scale: 0.82, opacity: 0.40, y: -12 },
-            { scale: 1.06, opacity: 1, y: -12, ease: 'power1.out', duration: 1 }
+          .fromTo(cutoutHoleText,
+            { scale: 0.82 },
+            { scale: 1.06, ease: 'power1.out', duration: 1 }
           )
-          .to(cutoutText,
-            { scale: 0.82, opacity: 0.40, y: -12, ease: 'power1.in', duration: 1 }
+          .to(cutoutHoleText,
+            { scale: 0.82, ease: 'power1.in', duration: 1 }
           );
+        if(cutoutCoverRect){
+          gsap.fromTo(cutoutCoverRect,
+            { opacity: 0.60 },
+            {
+              opacity: 1,
+              ease: 'power1.out',
+              scrollTrigger: {
+                trigger: cutoutSection,
+                start: 'top 80%',
+                end: 'top 30%',
+                scrub: 0.6,
+              }
+            }
+          );
+        }
       }
     }
 
@@ -4141,28 +4154,17 @@ document.addEventListener("DOMContentLoaded", checkExistingAuth);
   }
 
   /* ═══════════════════════════════════════════════════
-     7. CUTOUT BG FIX FOR iOS
+     7. CUTOUT BG — static; no parallax (image must never move)
      ═══════════════════════════════════════════════════ */
   var cutoutBg = document.querySelector('.cutout-bg');
   if(cutoutBg){
-    // iOS doesn't support background-attachment:fixed
+    // iOS doesn't support background-attachment:fixed — use scroll instead (no movement).
     var isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
     if(isIOS || isTouchDevice){
       cutoutBg.style.backgroundAttachment = 'scroll';
-      // Simple parallax via GSAP
-      if(typeof gsap !== 'undefined' && typeof ScrollTrigger !== 'undefined' && !prefersReduced){
-        gsap.to(cutoutBg, {
-          yPercent: -15,
-          ease: 'none',
-          scrollTrigger: {
-            trigger: cutoutBg.parentElement,
-            start: 'top bottom',
-            end: 'bottom top',
-            scrub: 1,
-          }
-        });
-      }
     }
+    // No GSAP parallax: the image must remain perfectly still so the SVG hole
+    // reveals a consistent portion of it.
   }
 
   /* ═══════════════════════════════════════════════════
