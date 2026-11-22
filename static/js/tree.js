@@ -1,17 +1,21 @@
 /**
  * tree.js — scroll-driven procedural 3D tree in the right margin
  *
- * Virtual coordinate system (maps to ACTUAL section boundaries, not equal thirds):
- *   y = 0.0 → aTop   (top of Section A / About)      crown tips
- *   y = 1.0 → bTop   (top of Section B / Programmes)  crown base / trunk top
- *   y = 2.0 → cTop   (top of Section C / Faculty)     trunk base / ROOT START
- *   y = 3.0 → cBottom (bottom of Faculty)              deepest roots
+ * Virtual coordinate system (maps to ACTUAL section boundaries):
+ *   y = 0.0 → aTop   (top of About)       — crown tips
+ *   y = 1.0 → bTop   (top of Programmes)  — crown base / trunk top
+ *   y = 2.0 → cTop   (top of Faculty)     — trunk base / root start
+ *   y = 3.0 → cBottom (bottom of Faculty) — deepest roots
  *
- * Crown  → y ∈ [0, 1]  — Section A (About)
- * Trunk  → y ∈ [1, 2]  — Section B (Programmes)
- * Roots  → y ∈ [2, 3]  — Section C (Faculty)
+ * Crown  → y ∈ [0, 1]  (About)
+ * Trunk  → y ∈ [1, 2]  (Programmes)
+ * Roots  → y ∈ [2, 3]  (Faculty)
  *
- * Vanilla Canvas 2D, no libraries. DPR capped at 1.5. Max 30fps.
+ * X coordinates are ABSOLUTE screen pixels — no virtual-to-screen mapping needed.
+ * The trunk centre is pinned to 0.84*W. Everything is clamped to [0.68*W, W+8].
+ * This guarantees the tree stays in the right ~32% of the viewport.
+ *
+ * Vanilla Canvas 2D, no libraries. DPR capped at 1.5. Max 30 fps.
  */
 (function () {
   'use strict';
@@ -49,8 +53,8 @@
   const sA = document.getElementById('about');
   const sB = document.getElementById('programmes');
   const sC = document.getElementById('faculty');
+  if (!sA || !sB || !sC) return;
 
-  /* Absolute page-y for each section boundary */
   let aTop = 0, bTop = 0, cTop = 0, cBottom = 0;
 
   function cacheSectionBounds() {
@@ -61,11 +65,11 @@
     cBottom = sC.getBoundingClientRect().bottom + sy;
   }
 
-  /* Convert virtual y → absolute page-y, honouring actual section heights */
+  /* Convert virtual y → absolute page-y */
   function vyToAbs(vy) {
-    if (vy <= 1) return aTop + vy * (bTop - aTop);           // About zone
-    if (vy <= 2) return bTop + (vy - 1) * (cTop - bTop);    // Programmes zone
-    return          cTop + (vy - 2) * (cBottom - cTop);     // Faculty zone
+    if (vy <= 1) return aTop + vy * (bTop - aTop);
+    if (vy <= 2) return bTop + (vy - 1) * (cTop - bTop);
+    return          cTop + (vy - 2) * (cBottom - cTop);
   }
 
   /* ─── 3. Seeded RNG ─────────────────────────────────────────────── */
@@ -81,6 +85,7 @@
 
   /* ─── 4. Segment storage (Float32Arrays, max 3500) ─────────────── */
   const MAX_SEG = 3500;
+  /* X/Y stored as VIRTUAL coordinates: vx in [−1,1], vy in [0,3] */
   const sx1    = new Float32Array(MAX_SEG);
   const sy1    = new Float32Array(MAX_SEG);
   const sx2    = new Float32Array(MAX_SEG);
@@ -102,42 +107,48 @@
   }
 
   /* ─── 5. Tree geometry ─────────────────────────────────────────── */
+  /*
+   * Virtual X: 0 = trunk centre. Branches spread ±0.5 at most.
+   * When projected, screenX = trunkX + vx * xSpread (+ wind + perspective).
+   * trunkX = 0.84*W, xSpread = 0.09*W  →  range = 0.84*W ± 0.045*W = [0.795W, 0.885W].
+   * Crown branches can spread a bit wider but are clamped in projectPt.
+   */
 
-  /* Crown/side-branch: y DECREASES (goes upward in the page) */
+  /* Crown/side-branch: y DECREASES going upward */
   function branch(x, y, angle, len, thick, depth, maxDepth, z, phase, type) {
-    if (depth > maxDepth || len < 0.005 || segCount >= MAX_SEG - 1) return;
+    if (depth > maxDepth || len < 0.004 || segCount >= MAX_SEG - 1) return;
     const x2 = x + Math.sin(angle) * len;
     const y2 = y - Math.cos(angle) * len;
-    const alpha = type === 1 ? 0.48 + rng() * 0.38 : 0.58 + rng() * 0.28;
-    addSeg(x, y, x2, y2, z, thick, alpha, depth, phase, type);
+    /* Clamp x2 to stay roughly in the right margin (vx ∈ [-0.70, 1.0]) */
+    const x2c = Math.max(-0.70, Math.min(1.0, x2));
+    const alpha = type === 1 ? 0.52 + rng() * 0.32 : 0.60 + rng() * 0.24;
+    addSeg(x, y, x2c, y2, z, thick, alpha, depth, phase, type);
     const splits = depth < 2 ? 3 : 2;
     for (let s = 0; s < splits; s++) {
-      const spread = (0.30 + rng() * 0.35) * (depth < 1 ? 0.65 : 1);
-      const side   = s === 0 ? -spread : (s === 1 ? spread : (rng()-0.5)*spread*0.6);
-      branch(x2, y2, angle+side, len*(0.57+rng()*0.17), thick*(0.53+rng()*0.11),
-             depth+1, maxDepth, Math.max(-1,Math.min(1,z+(rng()-0.5)*0.25)),
+      const spread = (0.22 + rng() * 0.28) * (depth < 1 ? 0.70 : 1);
+      const side   = s === 0 ? -spread : (s === 1 ? spread : (rng()-0.5)*spread*0.5);
+      branch(x2c, y2, angle+side, len*(0.58+rng()*0.15), thick*(0.54+rng()*0.10),
+             depth+1, maxDepth, Math.max(-1,Math.min(1,z+(rng()-0.5)*0.22)),
              phase+rng()*Math.PI*2, type);
     }
   }
 
-  /* Root: y INCREASES (goes downward).
-   * Starts at y=2.0, must reach y≈3.0.
-   * With initial len≈0.55 and lenMul≈0.62 over 7 levels:
-   *   cumulative = 0.55×(1−0.62^7)/(1−0.62) ≈ 1.38 → tips at y≈3.38 (clamped 3.05)
-   */
+  /* Root: y INCREASES downward. Starts at y=2.0 → y≈3.0 */
   function root(x, y, angle, len, thick, depth, maxDepth, z, phase) {
-    if (depth > maxDepth || len < 0.005 || segCount >= MAX_SEG - 1) return;
+    if (depth > maxDepth || len < 0.004 || segCount >= MAX_SEG - 1) return;
     const x2 = x + Math.sin(angle) * len;
     const y2 = y + Math.cos(angle) * len;
     if (y2 > 3.05) return;
-    const alpha = Math.min(0.90, 0.48 + rng()*0.38 + (depth/maxDepth)*0.08);
-    addSeg(x, y, x2, y2, z, thick, alpha, depth, phase, 2);
+    /* Clamp x; roots spread outward but stay in right third */
+    const x2c = Math.max(-0.65, Math.min(1.0, x2));
+    const alpha = Math.min(0.92, 0.52 + rng()*0.34 + (depth/maxDepth)*0.06);
+    addSeg(x, y, x2c, y2, z, thick, alpha, depth, phase, 2);
     const splits = depth < 3 ? 3 : 2;
     for (let s = 0; s < splits; s++) {
-      const spread = 0.25 + rng() * 0.40;
+      const spread = 0.22 + rng() * 0.38;
       const side   = s===0 ? -spread : (s===1 ? spread : (rng()-0.5)*spread);
-      root(x2, y2, angle+side, len*(0.60+rng()*0.14), thick*(0.56+rng()*0.10),
-           depth+1, maxDepth, Math.max(-1,Math.min(1,z+(rng()-0.5)*0.30)),
+      root(x2c, y2, angle+side, len*(0.60+rng()*0.14), thick*(0.57+rng()*0.09),
+           depth+1, maxDepth, Math.max(-1,Math.min(1,z+(rng()-0.5)*0.28)),
            phase+rng()*Math.PI*2);
     }
   }
@@ -152,42 +163,40 @@
     addSeg( 0.020, 1.60, -0.010, 1.80, 0.02,  9, 0.68, 0, 0.4, 0);
     addSeg(-0.010, 1.80,  0.000, 2.00, 0.00,  8, 0.64, 0, 0.5, 0);
 
-    /* Trunk side branches */
+    /* Trunk side branches — small, stay near trunk */
     const tYs = [1.15, 1.35, 1.55, 1.75, 1.90];
     const tSd = [-1,    1,   -1,    1,   -1];
     for (let i = 0; i < 5; i++) {
-      const ang = tSd[i] * (0.50 + rng()*0.35);
-      branch(0.01+tSd[i]*0.02, tYs[i], ang, 0.12+rng()*0.06,
-             4.0, 0, 3, (rng()-0.5)*0.4, rng()*Math.PI*2, 0);
+      const ang = tSd[i] * (0.40 + rng()*0.25);
+      branch(0.01+tSd[i]*0.015, tYs[i], ang, 0.09+rng()*0.05,
+             3.5, 0, 3, (rng()-0.5)*0.3, rng()*Math.PI*2, 0);
     }
 
     /* ── CROWN (type 1, branches upward from y=1.0, tops at y≈0.0) ── */
-    branch( 0.01, 1.00, -0.08, 0.30, 8.5, 0, 6,  0.10, 0.0, 1);
-    branch( 0.01, 1.00, -0.45, 0.25, 7.0, 0, 5, -0.20, 1.1, 1);
-    branch( 0.01, 1.00,  0.38, 0.25, 7.0, 0, 5,  0.30, 2.3, 1);
-    branch( 0.01, 1.00,  0.12, 0.28, 7.5, 0, 6,  0.00, 0.7, 1);
-    branch( 0.01, 1.00, -0.22, 0.22, 6.5, 0, 5, -0.10, 3.5, 1);
-    branch( 0.01, 1.00,  0.65, 0.18, 5.5, 0, 4,  0.20, 4.2, 1);
+    branch( 0.00, 1.00, -0.08, 0.28, 8.0, 0, 6,  0.10, 0.0, 1);
+    branch( 0.00, 1.00, -0.40, 0.23, 6.5, 0, 5, -0.20, 1.1, 1);
+    branch( 0.00, 1.00,  0.35, 0.23, 6.5, 0, 5,  0.30, 2.3, 1);
+    branch( 0.00, 1.00,  0.12, 0.26, 7.0, 0, 6,  0.00, 0.7, 1);
+    branch( 0.00, 1.00, -0.20, 0.20, 6.0, 0, 5, -0.10, 3.5, 1);
+    branch( 0.00, 1.00,  0.55, 0.16, 5.0, 0, 4,  0.20, 4.2, 1);
 
-    /* ── ROOTS (type 2, downward from y=2.0 → y≈3.0, Faculty zone) ── */
-    root( 0.00, 2.00,  0.50, 0.55, 8.5, 0, 6,  0.10, 0.0);
-    root( 0.00, 2.00, -0.50, 0.55, 8.5, 0, 6, -0.10, 1.5);
-    root( 0.02, 2.00,  0.18, 0.60, 9.5, 0, 7,  0.20, 0.8);
-    root(-0.02, 2.00, -0.18, 0.60, 9.5, 0, 7, -0.20, 2.2);
-    root( 0.00, 2.00,  0.80, 0.48, 6.5, 0, 5,  0.30, 3.1);
-    root( 0.00, 2.00, -0.80, 0.48, 6.5, 0, 5, -0.30, 4.6);
-    root( 0.01, 2.00,  0.00, 0.58, 7.0, 0, 6,  0.00, 5.8); // vertical tap root
+    /* ── ROOTS (type 2, downward from y=2.0 → y≈3.0) ── */
+    root( 0.00, 2.00,  0.45, 0.55, 8.5, 0, 6,  0.10, 0.0);
+    root( 0.00, 2.00, -0.45, 0.55, 8.5, 0, 6, -0.10, 1.5);
+    root( 0.02, 2.00,  0.18, 0.60, 9.0, 0, 7,  0.20, 0.8);
+    root(-0.02, 2.00, -0.18, 0.60, 9.0, 0, 7, -0.20, 2.2);
+    root( 0.00, 2.00,  0.75, 0.46, 6.0, 0, 5,  0.30, 3.1);
+    root( 0.00, 2.00, -0.75, 0.46, 6.0, 0, 5, -0.30, 4.6);
+    root( 0.00, 2.00,  0.00, 0.58, 7.0, 0, 6,  0.00, 5.8);
 
-    /* ── TAP ROOT SPINE: glowing vertical axis y=2.0..3.0 ──────── */
-    /* Guarantees a visible glowing column throughout the Faculty scroll zone.
-     * depth=3 gives t=3/7=0.43 → bright teal rgb(145,198,208) on dark background. */
+    /* Glowing vertical tap-root spine spanning Faculty zone */
     for (let k = 0; k < 12; k++) {
-      const y1  = 2.00 + k * (1.0 / 12);
-      const y2  = y1  + (1.0 / 12) + 0.01;
+      const y1  = 2.00 + k * (1.0/12);
+      const y2  = y1  + (1.0/12) + 0.01;
       const jit = (k % 2 === 0 ? 0.03 : -0.02);
       addSeg(jit, y1, -jit, y2, 0.0,
              Math.max(2.0, 8.0 - k*0.5),
-             0.80 - k*0.020, 3, k*0.5, 2);  // depth=3 → bright teal, not dark base
+             0.80 - k*0.018, 3, k*0.5, 2);
     }
   }
 
@@ -196,18 +205,23 @@
 
   function windDelta(depth, phase, t) {
     const flex = Math.pow(depth / 7, 1.4);
-    return (Math.sin(t*0.35 + phase + depth*0.7)*0.035
-          + Math.sin(t*0.13)*0.015) * flex * 28;
+    return (Math.sin(t*0.35 + phase + depth*0.7)*0.030
+          + Math.sin(t*0.13)*0.012) * flex * W * 0.028;
   }
 
-  /* Project virtual (vx, vy) → screen pixels */
+  /* Project virtual (vx, vy) → screen pixels.
+   * trunkX is ALWAYS recomputed from current W so it adapts to viewport width.
+   * xSpread: 1 unit of vx = this many screen pixels of spread from trunk centre.
+   * Edge clamp: nothing renders left of 0.68*W (soft fade from 0.68–0.76).
+   */
   function projectPt(vx, vy, z, depth, phase, scrollY) {
-    const screenY  = vyToAbs(vy) - scrollY;
-    const trunkX   = 0.80 * W;   // trunk at 80% — gives roots room to spread left into visible margin
-    const xSpread  = 0.11 * W;   // slightly wider spread so branches fan out more
-    const persp    = 1 / (1 - z * 0.35);
-    const wx       = windDelta(depth, phase, windT);
-    const screenX  = trunkX + (vx * xSpread + wx) * persp;
+    const absY   = vyToAbs(vy);
+    const screenY = absY - scrollY;
+    const trunkX  = 0.84 * W;
+    const xSpread = 0.085 * W;
+    const persp   = 1 / (1 - z * 0.32);
+    const wx      = windDelta(depth, phase, windT);
+    const screenX = trunkX + (vx * xSpread + wx) * persp;
     return { x: screenX, y: screenY };
   }
 
@@ -229,17 +243,18 @@
     const t = Math.min(depth / maxDepth, 1);
     let r, g, b;
     if (type === 2) {
-      // Roots: bright teal → luminous silver (spec: #5FB8CC → #D3D9D4)
-      // Start BRIGHT so roots glow against the dark Faculty background.
-      r = Math.round(95  + t * 116);  // 95→211  (#5FB8CC → #D3D9D4)
-      g = Math.round(184 + t * 33);   // 184→217
-      b = Math.round(204 + t * 8);    // 204→212
+      /* Roots: bright teal #5FB8CC → silver #D3D9D4 */
+      r = Math.round(95  + t * 116);
+      g = Math.round(184 + t * 33);
+      b = Math.round(204 + t * 8);
     } else if (type === 0) {
-      r = Math.round(18  + t * 98);   // #124E66 → #748D92
+      /* Trunk: dark teal #124E66 → grey-blue #748D92 */
+      r = Math.round(18  + t * 98);
       g = Math.round(78  + t * 59);
       b = Math.round(102 + t * 44);
     } else {
-      r = Math.round(95  + t * 116);  // #5FB8CC → #D3D9D4
+      /* Crown: teal-silver */
+      r = Math.round(95  + t * 116);
       g = Math.round(184 + t * 33);
       b = Math.round(204 + t * 8);
     }
@@ -250,26 +265,30 @@
   function render(sy) {
     ctx.clearRect(0, 0, W, H);
     const maxDepth = 7;
+    /* Left edge below which nothing renders (soft fade band) */
+    const leftBound  = 0.68 * W;
+    const fadeStart  = 0.68 * W;
+    const fadeEnd    = 0.76 * W;
 
-    /* Pass 1: glow (lighter blend) */
+    /* Pass 1: glow (lighter blend) for crown & roots */
     ctx.globalCompositeOperation = 'lighter';
     for (let i = 0; i < segCount; i++) {
       const type = sType[i];
-      if (type === 0) continue; // trunk: skip glow
+      if (type === 0) continue; // trunk: skip glow pass
 
       const p1 = projectPt(sx1[i], sy1[i], szArr[i], sDepth[i], sPhase[i], sy);
       const p2 = projectPt(sx2[i], sy2[i], szArr[i], sDepth[i], sPhase[i], sy);
-      if (p1.y < -80 && p2.y < -80) continue;
-      if (p1.y > H+80 && p2.y > H+80) continue;
+      if (p1.y < -100 && p2.y < -100) continue;
+      if (p1.y > H+100 && p2.y > H+100) continue;
 
       const midX = (p1.x + p2.x) * 0.5;
-      const edgeFade = midX < 0.65*W ? 0 :
-                       midX < 0.72*W ? (midX - 0.65*W)/(0.07*W) * 0.25 : 1;
+      if (midX < leftBound) continue;
+      const edgeFade = midX < fadeEnd ? (midX - fadeStart) / (fadeEnd - fadeStart) : 1;
       if (edgeFade <= 0) continue;
 
       ctx.strokeStyle = segColor(type, sDepth[i], maxDepth,
-                                 sAlpha[i] * (type===2 ? 0.20 : 0.07) * edgeFade);
-      ctx.lineWidth = sThick[i] * 3.5;
+                                 sAlpha[i] * (type===2 ? 0.18 : 0.06) * edgeFade);
+      ctx.lineWidth = sThick[i] * 3.0;
       ctx.lineCap   = 'round';
       ctx.beginPath();
       ctx.moveTo(p1.x, p1.y);
@@ -282,16 +301,16 @@
     for (let i = 0; i < segCount; i++) {
       const p1 = projectPt(sx1[i], sy1[i], szArr[i], sDepth[i], sPhase[i], sy);
       const p2 = projectPt(sx2[i], sy2[i], szArr[i], sDepth[i], sPhase[i], sy);
-      if (p1.y < -80 && p2.y < -80) continue;
-      if (p1.y > H+80 && p2.y > H+80) continue;
+      if (p1.y < -100 && p2.y < -100) continue;
+      if (p1.y > H+100 && p2.y > H+100) continue;
 
       const midX = (p1.x + p2.x) * 0.5;
-      let edgeFade = midX < 0.65*W ? 0 :
-                     midX < 0.72*W ? (midX - 0.65*W)/(0.07*W) : 1;
-      edgeFade *= (midX < 0.72*W ? 0.50 : 0.85);
-      if (edgeFade <= 0) continue;
+      if (midX < leftBound) continue;
+      let edgeFade = midX < fadeEnd ? (midX - fadeStart) / (fadeEnd - fadeStart) : 1;
+      edgeFade *= (midX < fadeEnd ? 0.55 : 0.88);
+      if (edgeFade <= 0.01) continue;
 
-      const persp = 1 / (1 - szArr[i] * 0.35);
+      const persp = 1 / (1 - szArr[i] * 0.32);
       ctx.strokeStyle = segColor(sType[i], sDepth[i], maxDepth, sAlpha[i]*edgeFade);
       ctx.lineWidth   = Math.max(0.5, sThick[i] * persp);
       ctx.lineCap     = 'round';
@@ -301,18 +320,19 @@
       ctx.stroke();
     }
 
-    /* Root specks: 60 tiny drifting dots in Faculty zone (y=2.0..3.0) */
+    /* Root specks: tiny ambient glints in Faculty zone */
     ctx.globalCompositeOperation = 'source-over';
-    const rootTop    = vyToAbs(2.0) - sy;          // = cTop - sy (top of Faculty)
-    const rootHeight = cBottom - cTop;              // actual Faculty section height
-    for (let k = 0; k < 60; k++) {
-      const speckX = 0.72*W + (k/60)*0.26*W + Math.sin(windT*0.3 + k)*2.5;
-      const speckY = rootTop + (k/60)*rootHeight   + Math.sin(windT*0.2 + k*1.3)*4;
+    const rootTop    = vyToAbs(2.0) - sy;
+    const rootHeight = cBottom - cTop;
+    for (let k = 0; k < 55; k++) {
+      const speckX = 0.76*W + (k/55)*0.22*W + Math.sin(windT*0.3 + k)*2;
+      const speckY = rootTop + (k/55)*rootHeight + Math.sin(windT*0.2 + k*1.3)*3.5;
       if (speckY < -5 || speckY > H+5) continue;
-      const ef = speckX < 0.80*W ? 0 : Math.min(1,(speckX-0.80*W)/(0.08*W));
-      ctx.fillStyle = `rgba(211,217,212,${(0.38*ef).toFixed(3)})`;
+      const ef = Math.min(1, (speckX - 0.80*W) / (0.06*W));
+      if (ef <= 0) continue;
+      ctx.fillStyle = `rgba(211,217,212,${(0.32*ef).toFixed(3)})`;
       ctx.beginPath();
-      ctx.arc(speckX, speckY, 1, 0, Math.PI*2);
+      ctx.arc(speckX, speckY, 0.9, 0, Math.PI*2);
       ctx.fill();
     }
   }
@@ -335,32 +355,6 @@
     render(sy);
   }
 
-  /* ─── DEBUG: expose internals for console inspection ───────────── */
-  let _lastDbgSec = -1;
-  window._treeDB = {
-    dump(scrollY) {
-      scrollY = scrollY || window.scrollY;
-      let rootCount = 0, firstRoot = null;
-      for (let i = 0; i < segCount; i++) {
-        if (sType[i] === 2) {
-          rootCount++;
-          if (!firstRoot) {
-            const p1 = projectPt(sx1[i], sy1[i], szArr[i], sDepth[i], sPhase[i], scrollY);
-            const p2 = projectPt(sx2[i], sy2[i], szArr[i], sDepth[i], sPhase[i], scrollY);
-            firstRoot = { vy1: sy1[i].toFixed(3), vy2: sy2[i].toFixed(3),
-                          screen: `(${p1.x.toFixed(0)},${p1.y.toFixed(0)})→(${p2.x.toFixed(0)},${p2.y.toFixed(0)})`,
-                          alpha: (sAlpha[i] * 0.85).toFixed(3), thick: sThick[i].toFixed(1) };
-          }
-        }
-      }
-      return { scrollY: scrollY.toFixed(0), aTop: aTop.toFixed(0), bTop: bTop.toFixed(0),
-               cTop: cTop.toFixed(0), cBottom: cBottom.toFixed(0), H, W,
-               segCount, rootCount, firstRoot,
-               canvasOpacity: canvas.style.opacity,
-               vy2screen: (vy) => `${vyToAbs(vy).toFixed(0)} → screenY=${(vyToAbs(vy)-scrollY).toFixed(0)}` };
-    }
-  };
-
   function startLoop() { if (running) return; running=true; rafId=requestAnimationFrame(loop); }
   function stopLoop()  { running=false; if(rafId) cancelAnimationFrame(rafId); rafId=0; }
 
@@ -377,6 +371,7 @@
       lastBuiltWidth = window.innerWidth;
       resizeCanvas();
       cacheSectionBounds();
+      /* No rebuild needed — geometry is in virtual coords; projectPt uses live W */
     }, 300);
   });
 
