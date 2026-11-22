@@ -179,14 +179,15 @@
     root( 0.01, 2.00,  0.00, 0.58, 7.0, 0, 6,  0.00, 5.8); // vertical tap root
 
     /* ── TAP ROOT SPINE: glowing vertical axis y=2.0..3.0 ──────── */
-    /* Guarantees a visible glowing column throughout the Faculty scroll zone */
+    /* Guarantees a visible glowing column throughout the Faculty scroll zone.
+     * depth=3 gives t=3/7=0.43 → bright teal rgb(145,198,208) on dark background. */
     for (let k = 0; k < 12; k++) {
       const y1  = 2.00 + k * (1.0 / 12);
       const y2  = y1  + (1.0 / 12) + 0.01;
       const jit = (k % 2 === 0 ? 0.03 : -0.02);
       addSeg(jit, y1, -jit, y2, 0.0,
              Math.max(2.0, 8.0 - k*0.5),
-             0.72 - k*0.025, 0, k*0.5, 2);
+             0.80 - k*0.020, 3, k*0.5, 2);  // depth=3 → bright teal, not dark base
     }
   }
 
@@ -228,9 +229,11 @@
     const t = Math.min(depth / maxDepth, 1);
     let r, g, b;
     if (type === 2) {
-      r = Math.round(18  + t * 77);   // #124E66 → ~#5FB8CC
-      g = Math.round(78  + t * 106);
-      b = Math.round(102 + t * 102);
+      // Roots: bright teal → luminous silver (spec: #5FB8CC → #D3D9D4)
+      // Start BRIGHT so roots glow against the dark Faculty background.
+      r = Math.round(95  + t * 116);  // 95→211  (#5FB8CC → #D3D9D4)
+      g = Math.round(184 + t * 33);   // 184→217
+      b = Math.round(204 + t * 8);    // 204→212
     } else if (type === 0) {
       r = Math.round(18  + t * 98);   // #124E66 → #748D92
       g = Math.round(78  + t * 59);
@@ -265,7 +268,7 @@
       if (edgeFade <= 0) continue;
 
       ctx.strokeStyle = segColor(type, sDepth[i], maxDepth,
-                                 sAlpha[i] * (type===2 ? 0.12 : 0.07) * edgeFade);
+                                 sAlpha[i] * (type===2 ? 0.20 : 0.07) * edgeFade);
       ctx.lineWidth = sThick[i] * 3.5;
       ctx.lineCap   = 'round';
       ctx.beginPath();
