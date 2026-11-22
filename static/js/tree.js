@@ -113,7 +113,7 @@
   }
 
   /* ═══════════════════════════════════════════════════════
-     6.  SEGMENT STORAGE (Float32Arrays, max 9000)
+     6.  SEGMENT STORAGE (Float32Arrays, max 9200)
   ═══════════════════════════════════════════════════════ */
   const MSEG = 9200;
   const svx1 = new Float32Array(MSEG);
@@ -143,45 +143,42 @@
   const CMAX      = 9;
   const RMAX      = 7;
   const MAX_CROWN = 4400;
-  const MAX_ROOT  = 4000;
+  const MAX_ROOT  = 3500;
   let   crownSegs = 0;
   let   rootSegs  = 0;
 
-  /* ── Crown recursive branch ───────────────────────────── */
+  /* ── Crown recursive branch (UPWARD & LEFTWARD) ───────── */
   function growCrown(x, y, angle, len, thick, depth, z, p) {
     if (depth > CMAX || len < 0.0030 || crownSegs >= MAX_CROWN || nSeg >= MSEG - 1) return;
 
-    // Organic curve jitter per branch
     const curve = (rng() - 0.48) * 0.16;
     const curAngle = angle + curve;
 
     const nx = x - Math.sin(curAngle) * len;
     const ny = y - Math.cos(curAngle) * len * ASPECT;
 
-    // Stop cleanly if boundary is reached (no hard clamp flattening)
-    if (nx < -0.55 || ny < 0.0) return;
+    if (nx < -0.55 || ny < 0.005) return;
 
-    // Fade branches under text column (vx < -0.45w)
     const leftmost = Math.abs(Math.min(nx, x));
-    const bodyA = leftmost > 0.45
-      ? 0.95 * (0.30 + 0.70 * Math.max(0, 1 - (leftmost - 0.45) / 0.10))
-      : 0.95;
-    const rimA = thick > 8 ? 0.55 : (thick > 3 ? 0.25 : 0.12);
+    const fade = leftmost > 0.45 ? Math.max(0, 1 - (leftmost - 0.45) / 0.10) : 1;
+    const bodyA = 0.95 * (0.30 + 0.70 * fade);
+    let rimA = thick > 8 ? 0.55 : (thick > 3 ? 0.25 : 0.12);
+    rimA *= (0.30 + 0.70 * fade);
 
     pushSeg(x, y, nx, ny, z, thick, bodyA, rimA, depth, p);
     crownSegs++;
 
     const nK = depth < 2 ? 3 : (depth < 6 ? 2 : (rng() < 0.52 ? 2 : 1));
-    const lMul = 0.73 + rng() * 0.11;
+    const lMul = 0.74 + rng() * 0.11;
     const tMul = 0.61 + rng() * 0.08;
 
     for (let k = 0; k < nK; k++) {
-      const spread = (0.22 + rng() * 0.26) * (depth < 1 ? 0.75 : 1);
+      const spread = (0.24 + rng() * 0.26) * (depth < 1 ? 0.75 : 1);
       let cA = nK === 3
         ? (k === 0 ? curAngle + spread * 1.25 : k === 1 ? curAngle + (rng() - 0.5) * 0.18 : curAngle - spread * 0.6)
         : (k === 0 ? curAngle + spread * 1.05 : curAngle - spread * 0.55);
       cA += (rng() - 0.5) * 0.20;
-      if (depth >= 5) cA += rng() * 0.07; // gravity droop
+      if (depth >= 5) cA += rng() * 0.07;
 
       const cLen = len * lMul * (1 + (rng() - 0.5) * 0.15);
       const cZ   = Math.max(-1, Math.min(1, z + (rng() - 0.5) * 0.25));
@@ -190,36 +187,35 @@
     }
   }
 
-  /* ── Root recursive branch ────────────────────────────── */
+  /* ── Root recursive branch (DOWNWARD & OUTWARD) ───────── */
   function growRoot(x, y, angle, len, thick, depth, z, p) {
     if (depth > RMAX || len < 0.0028 || rootSegs >= MAX_ROOT || nSeg >= MSEG - 1) return;
 
-    // Organic gnarly root twists
-    const gnarl = (rng() - 0.5) * 0.32;
-    const curAngle = Math.max(0.06, Math.min(1.54, angle + gnarl));
+    const gnarl = (rng() - 0.5) * 0.28;
+    const curAngle = Math.max(-0.15, Math.min(1.48, angle + gnarl));
 
-    const nx = x - Math.cos(curAngle) * len;
-    const ny = y + Math.sin(curAngle) * len * ASPECT;
+    const nx = x - Math.sin(curAngle) * len;
+    const ny = y + Math.cos(curAngle) * len * ASPECT;
 
     if (nx < -0.54 || ny > 3.02) return;
 
     const leftmost = Math.abs(Math.min(nx, x));
-    const bodyA = leftmost > 0.45
-      ? 0.95 * (0.30 + 0.70 * Math.max(0, 1 - (leftmost - 0.45) / 0.10))
-      : 0.95;
-    const rimA = thick > 8 ? 0.55 : (thick > 3 ? 0.25 : 0.12);
+    const fade = leftmost > 0.45 ? Math.max(0, 1 - (leftmost - 0.45) / 0.10) : 1;
+    const bodyA = 0.95 * (0.30 + 0.70 * fade);
+    let rimA = thick > 8 ? 0.55 : (thick > 3 ? 0.25 : 0.12);
+    rimA *= (0.30 + 0.70 * fade);
 
     pushSeg(x, y, nx, ny, z, thick, bodyA, rimA, depth, p);
     rootSegs++;
 
-    const nK   = depth < 3 ? 3 : 2;
-    const lMul = 0.72 + rng() * 0.11;
-    const tMul = 0.62 + rng() * 0.08;
+    const nK   = depth < 3 ? 3 : (depth < 6 ? 2 : (rng() < 0.60 ? 2 : 1));
+    const lMul = 0.74 + rng() * 0.10;
+    const tMul = 0.63 + rng() * 0.08;
 
     for (let k = 0; k < nK; k++) {
-      const spread = 0.24 + rng() * 0.34;
-      let cA = Math.max(0.06, Math.min(1.52,
-        k === 0 ? curAngle + spread * 0.85
+      const spread = 0.24 + rng() * 0.30;
+      let cA = Math.max(-0.10, Math.min(1.45,
+        k === 0 ? curAngle + spread * 0.95
         : k === 1 ? curAngle - spread * 0.55
         : curAngle + (rng() - 0.5) * spread * 0.7));
       const cZ  = Math.max(-1, Math.min(1, z + (rng() - 0.5) * 0.25));
@@ -244,7 +240,6 @@
 
     /* ── Trunk (Programmes, vy 1.0 → 2.0) ──────────────────
        Wide base (~0.06w ≈ 77px), tapering to 44px, S-curve.
-       Segmented smoothly into 8 sections.
     ──────────────────────────────────────────────────────── */
     const trunkPts = [
       [ 0.000, 2.00, 77],
@@ -262,37 +257,37 @@
       pushSeg(p1[0], p1[1], p2[0], p2[1], 0.0, (p1[2] + p2[2]) / 2, 0.95, 0.55, 0, i * 0.1);
     }
 
-    /* Trunk side branches in Programmes section */
+    /* Trunk side limbs in Programmes section */
     const trunkSideLimbs = [
-      [-0.018, 1.18, 0.62, 0.16, 26],
-      [-0.026, 1.32, 0.82, 0.15, 24],
-      [-0.034, 1.48, 0.68, 0.15, 22],
-      [-0.030, 1.62, 0.88, 0.14, 20],
-      [-0.020, 1.76, 0.72, 0.13, 18],
+      [-0.018, 1.18, 0.62, 0.18, 26],
+      [-0.026, 1.32, 0.82, 0.17, 24],
+      [-0.034, 1.48, 0.68, 0.16, 22],
+      [-0.030, 1.62, 0.88, 0.15, 20],
+      [-0.020, 1.76, 0.72, 0.14, 18],
     ];
     for (const [bx, by, bA, bL, bT] of trunkSideLimbs) {
       growCrown(bx, by, bA, bL, bT, 1, 0, rng() * Math.PI * 2);
     }
 
-    /* Trunk buttress flaring into the roots */
+    /* Flared root buttress at base of trunk */
     pushSeg( 0.000, 2.00, -0.065, 2.06, 0.00, 36, 0.95, 0.52, 1, 0.00);
     pushSeg( 0.000, 2.00, -0.115, 2.12, 0.10, 28, 0.95, 0.50, 1, 0.50);
     pushSeg( 0.000, 2.00, -0.160, 2.18, 0.00, 20, 0.95, 0.44, 1, 1.00);
 
     /* ── Crown (About, vy 0 → 1) ───────────────────────────
-       Oak-like canopy limbs branching leftward.
+       Full-height oak canopy reaching up to vy = 0.01
     ──────────────────────────────────────────────────────── */
     const LIMBS = [
-      [-0.008, 1.00,  0.35, 0.15, 40],
-      [-0.008, 1.00,  0.68, 0.14, 36],
-      [-0.008, 1.00,  0.96, 0.12, 30],
-      [-0.008, 1.00,  0.18, 0.15, 38],
-      [-0.008, 1.00,  1.22, 0.10, 24],
-      [-0.008, 1.00, -0.04, 0.15, 34],
-      [-0.008, 1.00,  0.50, 0.13, 32],
-      [-0.008, 1.00,  1.48, 0.08, 18],
-      [-0.014, 1.08,  0.58, 0.14, 28],
-      [-0.022, 1.22,  0.78, 0.13, 24],
+      [-0.008, 1.00,  0.35, 0.27, 40],
+      [-0.008, 1.00,  0.68, 0.24, 36],
+      [-0.008, 1.00,  0.96, 0.20, 30],
+      [-0.008, 1.00,  0.18, 0.26, 38],
+      [-0.008, 1.00,  1.22, 0.17, 24],
+      [-0.008, 1.00, -0.04, 0.25, 34],
+      [-0.008, 1.00,  0.50, 0.22, 32],
+      [-0.008, 1.00,  1.48, 0.13, 18],
+      [-0.014, 1.08,  0.58, 0.21, 28],
+      [-0.022, 1.22,  0.78, 0.19, 24],
     ];
     for (const [lx, ly, lA, lL, lT] of LIMBS) {
       const z = (rng() - 0.5) * 0.70;
@@ -301,35 +296,30 @@
     }
 
     /* ── Roots (Faculty, vy 2.0 → 3.0) ────────────────────
-       Gnarly buttress roots descending from base of trunk
-       and cascading down the right edge across Section C.
+       Gnarly roots descending & fanning across entire Section C
     ──────────────────────────────────────────────────────── */
     const ROOT_ORIGINS = [
-      // Major flared buttress roots from trunk base (vy = 1.95 - 2.05)
-      [0.00, 1.95, 0.65, 0.17, 44],
-      [0.00, 2.00, 0.30, 0.19, 48],
-      [0.00, 2.00, 0.58, 0.20, 52],
-      [0.00, 2.00, 0.88, 0.21, 50],
-      [0.00, 2.00, 1.18, 0.20, 46],
-      [0.00, 2.00, 1.42, 0.19, 42],
-
-      // Roots cascading down along the right edge through Faculty section
-      [0.00, 2.15, 0.45, 0.16, 38],
-      [0.00, 2.15, 0.85, 0.18, 40],
-      [0.00, 2.15, 1.25, 0.17, 36],
-
-      [0.00, 2.30, 0.50, 0.15, 34],
-      [0.00, 2.30, 0.92, 0.16, 35],
-      [0.00, 2.30, 1.30, 0.15, 30],
-
-      [0.00, 2.45, 0.55, 0.14, 28],
-      [0.00, 2.45, 1.00, 0.15, 30],
-
-      [0.00, 2.60, 0.58, 0.13, 24],
-      [0.00, 2.60, 1.08, 0.14, 25],
-
-      [0.00, 2.75, 0.62, 0.12, 20],
-      [0.00, 2.75, 1.12, 0.12, 20],
+      [0.00, 1.95, 0.60, 0.26, 42],
+      [0.00, 2.00, 0.15, 0.27, 44],
+      [0.00, 2.00, 0.40, 0.28, 48],
+      [0.00, 2.00, 0.68, 0.29, 52],
+      [0.00, 2.00, 0.95, 0.28, 48],
+      [0.00, 2.00, 1.25, 0.25, 42],
+      [-0.01, 2.06, 0.30, 0.25, 40],
+      [-0.02, 2.12, 0.65, 0.25, 42],
+      [-0.03, 2.18, 1.05, 0.23, 38],
+      [0.00, 2.22, 0.22, 0.24, 36],
+      [0.00, 2.25, 0.60, 0.24, 38],
+      [0.00, 2.28, 1.00, 0.23, 34],
+      [0.00, 2.38, 0.25, 0.22, 34],
+      [0.00, 2.42, 0.70, 0.22, 34],
+      [0.00, 2.48, 1.10, 0.21, 30],
+      [0.00, 2.58, 0.30, 0.20, 28],
+      [0.00, 2.62, 0.75, 0.20, 28],
+      [0.00, 2.72, 0.35, 0.18, 24],
+      [0.00, 2.76, 0.80, 0.18, 24],
+      [0.00, 2.85, 0.40, 0.16, 20],
+      [0.00, 2.88, 0.85, 0.16, 20],
     ];
     for (const [rx, ry, rA, rL, rT] of ROOT_ORIGINS) {
       const z = (rng() - 0.5) * 0.50;
@@ -423,7 +413,6 @@
       if (p1.y > H + 60 && p2.y > H + 60) continue;
 
       const persp = 1 / (1 - svz[i] * 0.30);
-      // Crisp thin rim highlight: slightly wider than body, offset up-left
       const lw = Math.max(0.6, sth[i] * tScale * persp + 1.2);
 
       ctx.strokeStyle = `rgba(95,184,204,${sra[i].toFixed(3)})`;
@@ -434,7 +423,7 @@
       ctx.stroke();
     }
 
-    /* 4. Body pass: dark silhouette #0B1117 drawn over the rim pass */
+    /* 4. Body pass: dark silhouette #0B1117 drawn over rim pass */
     ctx.globalCompositeOperation = 'source-over';
     for (let i = 0; i < nSeg; i++) {
       const p1 = project(svx1[i], svy1[i], svz[i], sdp[i], sph[i], scrollY);
