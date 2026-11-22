@@ -189,10 +189,10 @@
 
   /* ── Root recursive branch (DOWNWARD & OUTWARD) ───────── */
   function growRoot(x, y, angle, len, thick, depth, z, p) {
-    if (depth > RMAX || len < 0.0028 || rootSegs >= MAX_ROOT || nSeg >= MSEG - 1) return;
+    if (depth > RMAX || len < 0.0025 || rootSegs >= MAX_ROOT || nSeg >= MSEG - 1) return;
 
     const gnarl = (rng() - 0.5) * 0.28;
-    const curAngle = Math.max(-0.15, Math.min(1.48, angle + gnarl));
+    const curAngle = Math.max(-0.15, Math.min(1.22, angle + gnarl));
 
     const nx = x - Math.sin(curAngle) * len;
     const ny = y + Math.cos(curAngle) * len * ASPECT;
@@ -208,16 +208,16 @@
     pushSeg(x, y, nx, ny, z, thick, bodyA, rimA, depth, p);
     rootSegs++;
 
-    const nK   = depth < 3 ? 3 : (depth < 6 ? 2 : (rng() < 0.60 ? 2 : 1));
-    const lMul = 0.74 + rng() * 0.10;
-    const tMul = 0.63 + rng() * 0.08;
+    const nK   = depth < 2 ? 3 : (depth < 5 ? 2 : (rng() < 0.55 ? 2 : 1));
+    const lMul = 0.73 + rng() * 0.10;
+    const tMul = 0.55 + rng() * 0.08; // graceful quick taper to fine tips
 
     for (let k = 0; k < nK; k++) {
-      const spread = 0.24 + rng() * 0.30;
-      let cA = Math.max(-0.10, Math.min(1.45,
-        k === 0 ? curAngle + spread * 0.95
+      const spread = 0.22 + rng() * 0.28;
+      let cA = Math.max(-0.10, Math.min(1.25,
+        k === 0 ? curAngle + spread * 0.90
         : k === 1 ? curAngle - spread * 0.55
-        : curAngle + (rng() - 0.5) * spread * 0.7));
+        : curAngle + (rng() - 0.5) * spread * 0.6));
       const cZ  = Math.max(-1, Math.min(1, z + (rng() - 0.5) * 0.25));
       const cP  = p + rng() * Math.PI * 1.5;
       growRoot(nx, ny, cA, len * lMul, Math.max(0.4, thick * tMul), depth + 1, cZ, cP);
@@ -296,30 +296,29 @@
     }
 
     /* ── Roots (Faculty, vy 2.0 → 3.0) ────────────────────
-       Gnarly roots descending & fanning across entire Section C
+       Gnarly roots descending & fanning across entire Section C.
+       Buttress roots emerge from trunk base and taper gracefully.
     ──────────────────────────────────────────────────────── */
     const ROOT_ORIGINS = [
-      [0.00, 1.95, 0.60, 0.26, 42],
-      [0.00, 2.00, 0.15, 0.27, 44],
-      [0.00, 2.00, 0.40, 0.28, 48],
-      [0.00, 2.00, 0.68, 0.29, 52],
-      [0.00, 2.00, 0.95, 0.28, 48],
-      [0.00, 2.00, 1.25, 0.25, 42],
-      [-0.01, 2.06, 0.30, 0.25, 40],
-      [-0.02, 2.12, 0.65, 0.25, 42],
-      [-0.03, 2.18, 1.05, 0.23, 38],
-      [0.00, 2.22, 0.22, 0.24, 36],
-      [0.00, 2.25, 0.60, 0.24, 38],
-      [0.00, 2.28, 1.00, 0.23, 34],
-      [0.00, 2.38, 0.25, 0.22, 34],
-      [0.00, 2.42, 0.70, 0.22, 34],
-      [0.00, 2.48, 1.10, 0.21, 30],
-      [0.00, 2.58, 0.30, 0.20, 28],
-      [0.00, 2.62, 0.75, 0.20, 28],
-      [0.00, 2.72, 0.35, 0.18, 24],
-      [0.00, 2.76, 0.80, 0.18, 24],
-      [0.00, 2.85, 0.40, 0.16, 20],
-      [0.00, 2.88, 0.85, 0.16, 20],
+      [ 0.00, 2.00, 0.12, 0.18, 36],
+      [ 0.00, 2.00, 0.32, 0.19, 38],
+      [ 0.00, 2.00, 0.55, 0.20, 40],
+      [ 0.00, 2.00, 0.78, 0.18, 36],
+      [ 0.00, 2.00, 0.98, 0.16, 32],
+      [-0.015, 2.05, 0.25, 0.17, 32],
+      [-0.025, 2.10, 0.50, 0.18, 34],
+      [-0.035, 2.16, 0.75, 0.17, 30],
+      [ 0.00, 2.22, 0.20, 0.16, 28],
+      [ 0.00, 2.22, 0.55, 0.17, 30],
+      [ 0.00, 2.22, 0.85, 0.16, 26],
+      [ 0.00, 2.38, 0.22, 0.15, 26],
+      [ 0.00, 2.38, 0.60, 0.16, 26],
+      [ 0.00, 2.38, 0.90, 0.15, 24],
+      [ 0.00, 2.55, 0.25, 0.14, 22],
+      [ 0.00, 2.55, 0.65, 0.14, 22],
+      [ 0.00, 2.70, 0.30, 0.13, 20],
+      [ 0.00, 2.70, 0.70, 0.13, 20],
+      [ 0.00, 2.85, 0.35, 0.12, 18],
     ];
     for (const [rx, ry, rA, rL, rT] of ROOT_ORIGINS) {
       const z = (rng() - 0.5) * 0.50;
