@@ -246,34 +246,11 @@ def register(body: RegisterRequest, request: Request):
         if not body.enrollment_no:
             raise HTTPException(400, "Please enter your enrollment number.")
         enr_clean = body.enrollment_no.strip()
+        # Accept any valid 11-digit numeric enrollment number
         if enr_clean.isdigit() and len(enr_clean) != 11:
             raise HTTPException(400, "Enrollment number must be exactly 11 digits (e.g. 02616401521).")
         if not (IS_DEV and enr_clean.startswith("stu")) and not (enr_clean.isdigit() and len(enr_clean) == 11):
             raise HTTPException(400, "Enrollment number must be exactly 11 digits (e.g. 02616401521).")
-
-        # The course code may appear anywhere in the middle of the 11-digit
-        # enrollment number, excluding the first 3 and last 2 digits.
-        # Keep this server-side check authoritative; client-side validation is only UX.
-        if body.role == "student":
-            course_text = " ".join(
-                part.strip().lower()
-                for part in (body.department or "", body.programme or "")
-                if part and part.strip()
-            )
-            required_code = None
-            if "b.a." in course_text or "ba hons" in course_text or "ba (hons" in course_text:
-                if "english" in course_text:
-                    required_code = "617"
-                elif "economics" in course_text or "eco" in course_text:
-                    required_code = "616"
-            elif "m.a." in course_text or course_text.startswith("ma ") or " ma " in f" {course_text} ":
-                if "economics" in course_text or "eco" in course_text:
-                    required_code = "307"
-                elif "english" in course_text:
-                    required_code = "109"
-
-            if not required_code or required_code not in enr_clean[3:-2]:
-                raise HTTPException(400, "Invalid Enrollment Number")
 
         existing_enr = sb.table("users").select("id, status, supabase_uid").eq("enrollment_no", enr_clean).execute().data or []
         for row_enr in existing_enr:
