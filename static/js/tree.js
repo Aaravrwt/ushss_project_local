@@ -335,6 +335,32 @@
     render(sy);
   }
 
+  /* ─── DEBUG: expose internals for console inspection ───────────── */
+  let _lastDbgSec = -1;
+  window._treeDB = {
+    dump(scrollY) {
+      scrollY = scrollY || window.scrollY;
+      let rootCount = 0, firstRoot = null;
+      for (let i = 0; i < segCount; i++) {
+        if (sType[i] === 2) {
+          rootCount++;
+          if (!firstRoot) {
+            const p1 = projectPt(sx1[i], sy1[i], szArr[i], sDepth[i], sPhase[i], scrollY);
+            const p2 = projectPt(sx2[i], sy2[i], szArr[i], sDepth[i], sPhase[i], scrollY);
+            firstRoot = { vy1: sy1[i].toFixed(3), vy2: sy2[i].toFixed(3),
+                          screen: `(${p1.x.toFixed(0)},${p1.y.toFixed(0)})→(${p2.x.toFixed(0)},${p2.y.toFixed(0)})`,
+                          alpha: (sAlpha[i] * 0.85).toFixed(3), thick: sThick[i].toFixed(1) };
+          }
+        }
+      }
+      return { scrollY: scrollY.toFixed(0), aTop: aTop.toFixed(0), bTop: bTop.toFixed(0),
+               cTop: cTop.toFixed(0), cBottom: cBottom.toFixed(0), H, W,
+               segCount, rootCount, firstRoot,
+               canvasOpacity: canvas.style.opacity,
+               vy2screen: (vy) => `${vyToAbs(vy).toFixed(0)} → screenY=${(vyToAbs(vy)-scrollY).toFixed(0)}` };
+    }
+  };
+
   function startLoop() { if (running) return; running=true; rafId=requestAnimationFrame(loop); }
   function stopLoop()  { running=false; if(rafId) cancelAnimationFrame(rafId); rafId=0; }
 
